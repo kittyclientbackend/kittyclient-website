@@ -338,13 +338,23 @@
     .faq details p { margin-top: 14px; }
     @media (max-width: 1080px) {
       .hero,
-      .grid,
-      .main-header { grid-template-columns: 1fr; }
-      .nav,
-      .micro { justify-self: start; }
+      .grid { grid-template-columns: 1fr; }
+      .main-header { grid-template-columns: auto 1fr; }
+      .micro { display: none; }
+      .nav { justify-self: start; }
     }
     @media (max-width: 700px) {
       .page { width: min(var(--max), calc(100vw - 24px)); }
+      .main-header {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .nav {
+        justify-self: start;
+        gap: 4px;
+      }
+      .nav a { padding: 8px 10px; }
       .hero-copy,
       .hero-side,
       .section-body,

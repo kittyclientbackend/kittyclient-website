@@ -649,13 +649,23 @@
       .account-grid,
       .dashboard-grid,
       .auth-extra,
-      .info-fill,
-      .main-header { grid-template-columns: 1fr; }
-      .nav,
-      .mini { justify-self: start; }
+      .info-fill { grid-template-columns: 1fr; }
+      .main-header { grid-template-columns: auto 1fr; }
+      .mini { display: none; }
+      .nav { justify-self: start; }
     }
     @media (max-width: 700px) {
       .page { width: min(var(--max), calc(100vw - 24px)); }
+      .main-header {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .nav {
+        justify-self: start;
+        gap: 4px;
+      }
+      .nav a { padding: 8px 10px; }
       .hero,
       .card { padding: 18px; }
       .hero { padding: 20px; }
