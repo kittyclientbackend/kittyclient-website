@@ -512,8 +512,46 @@
     }
     .dashboard-grid {
       display: grid;
-      grid-template-columns: minmax(0, 1fr);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
+    }
+    .dashboard-grid > article:first-child {
+      grid-column: 1 / -1;
+    }
+    .hwid-hash {
+      font-size: 0.68rem !important;
+      word-break: break-all;
+      opacity: 0.7;
+      font-family: monospace;
+      letter-spacing: 0.04em;
+    }
+    .friends-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .friends-empty {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .friend-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .friend-row:last-child { border-bottom: 0; }
+    .friend-name {
+      font-size: 0.95rem;
+    }
+    .friend-since {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.58rem;
+      color: var(--muted);
     }
     .dashboard-panel {
       padding: 16px;
@@ -846,37 +884,19 @@
                   <button id="googleBtn" class="btn-google" type="button">Continue with Google</button>
                   <button id="resendVerificationBtn" type="button">Resend Verification Email</button>
                 </form>
-                <div id="authExtra" class="auth-extra">
-                  <article class="auth-panel">
-                    <h3>What this unlocks</h3>
-                    <p>Your account anchors the connected side of KittyClient: identity, repeat access, premium session flow, and a more personal client experience.</p>
-                    <div class="auth-list">
-                      <div class="auth-line"><span>Access</span><strong>Email or Google</strong></div>
-                      <div class="auth-line"><span>Identity</span><strong>Display name and account profile</strong></div>
-                      <div class="auth-line"><span>Session</span><strong>Stays signed in locally</strong></div>
-                    </div>
-                  </article>
-                  <article class="auth-panel">
-                    <h3>KittyClient feel</h3>
-                    <p>The client is meant to feel futuristic, expressive, and alive. Even the account flow should feel like part of the same world, not a detached utility screen.</p>
-                    <div class="auth-list">
-                      <div class="auth-line"><span>Style</span><strong>Playful, premium, immersive</strong></div>
-                      <div class="auth-line"><span>Identity</span><strong>Recognizable, account-aware, connected</strong></div>
-                      <div class="auth-line"><span>Goal</span><strong>Power without feeling cold</strong></div>
-                    </div>
-                  </article>
-                </div>
               </div>
               <section id="dashboard" class="dashboard">
                 <div class="dashboard-grid">
+
+                  <!-- Overview -->
                   <article class="dashboard-panel">
                     <span class="muted-tag">Overview</span>
                     <h3>Account dashboard</h3>
-                    <p id="dashboardWelcome">Signed in and ready to manage your KittyClient account.</p>
+                    <p id="dashboardWelcome">Signed in and ready.</p>
                     <section id="passwordSetup" class="password-setup">
                       <div>
                         <h3>Set your client password</h3>
-                        <p>Finish the account by creating the password your launcher and Minecraft client will use, so this identity works cleanly across the full KittyClient experience.</p>
+                        <p>Finish the account by creating the password your launcher and Minecraft client will use.</p>
                       </div>
                       <label>Client password<input id="googlePassword" type="password" placeholder="Minimum 6 characters" autocomplete="new-password" /></label>
                       <label>Confirm client password<input id="googlePasswordConfirm" type="password" placeholder="Repeat password" autocomplete="new-password" /></label>
@@ -886,6 +906,39 @@
                       <button id="logoutBtn" type="button">Sign Out</button>
                     </div>
                   </article>
+
+                  <!-- Client Stats -->
+                  <article class="dashboard-panel">
+                    <span class="muted-tag">Client</span>
+                    <h3>Stats</h3>
+                    <div class="dashboard-list">
+                      <div class="dashboard-line"><span>Status</span><strong id="statStatus">—</strong></div>
+                      <div class="dashboard-line"><span>Client Version</span><strong id="statVersion">—</strong></div>
+                      <div class="dashboard-line"><span>Login Count</span><strong id="statLogins">—</strong></div>
+                      <div class="dashboard-line"><span>Last Login</span><strong id="statLastLogin">—</strong></div>
+                      <div class="dashboard-line"><span>Member Since</span><strong id="statCreated">—</strong></div>
+                    </div>
+                  </article>
+
+                  <!-- Security -->
+                  <article class="dashboard-panel">
+                    <span class="muted-tag">Security</span>
+                    <h3>Device</h3>
+                    <div class="dashboard-list">
+                      <div class="dashboard-line"><span>HWID Bound</span><strong id="statHwidAt">—</strong></div>
+                      <div class="dashboard-line"><span>HWID Hash</span><strong id="statHwidHash" class="hwid-hash">—</strong></div>
+                    </div>
+                  </article>
+
+                  <!-- Friends -->
+                  <article class="dashboard-panel">
+                    <span class="muted-tag">Social</span>
+                    <h3>Friends</h3>
+                    <div id="friendsList" class="friends-list">
+                      <p class="friends-empty">No friends added yet.</p>
+                    </div>
+                  </article>
+
                 </div>
               </section>
             </div>
@@ -903,6 +956,7 @@
                 <div class="account-item"><span class="field-tag">Email</span><strong id="accountEmail">-</strong></div>
                 <div class="account-item"><span class="field-tag">User ID</span><strong id="accountUid">-</strong></div>
                 <div class="account-item"><span class="field-tag">Provider</span><strong id="accountProvider">-</strong></div>
+                <div class="account-item"><span class="field-tag">Minecraft UUID</span><strong id="accountMcUuid">-</strong></div>
               </div>
             </section>
           </div>
@@ -1117,24 +1171,71 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { EmailAuthProvider, getAuth, GoogleAuthProvider, browserLocalPersistence, createUserWithEmailAndPassword, linkWithCredential, onAuthStateChanged, sendEmailVerification, setPersistence, signInWithEmailAndPassword, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     const firebaseConfig = { apiKey: "AIzaSyA4_Mylnnsp0XDuf4awoJS-ro5WL-UfsZg", authDomain: "kittyclientauth.firebaseapp.com", projectId: "kittyclientauth", storageBucket: "kittyclientauth.firebasestorage.app", messagingSenderId: "950050113829", appId: "1:950050113829:web:317da48c762964e37032cc" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    function fmt(ts) {
+      if (!ts) return "—";
+      return new Date(ts.seconds * 1000).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    }
+    function clearDashboard() {
+      ["statStatus","statVersion","statLogins","statLastLogin","statCreated","statHwidAt","statHwidHash","accountMcUuid"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "—";
+      });
+      const fl = document.getElementById("friendsList");
+      if (fl) fl.innerHTML = '<p class="friends-empty">No friends added yet.</p>';
+    }
     async function applySkin(user) {
       let mcUUID = null;
       if (user) {
         try {
-          const snap = await getDoc(doc(db, "publicUsers", user.uid));
-          if (snap.exists()) {
-            mcUUID = snap.data().mcUUID || null;
-            const igName = snap.data().displayName || null;
+          // publicUsers — in-game name + mcUUID
+          const pubSnap = await getDoc(doc(db, "publicUsers", user.uid));
+          if (pubSnap.exists()) {
+            mcUUID = pubSnap.data().mcUUID || null;
+            const igName = pubSnap.data().displayName || null;
             const nameEl = document.getElementById("accountName");
             if (nameEl && igName) nameEl.textContent = igName;
+            const uuidEl = document.getElementById("accountMcUuid");
+            if (uuidEl && mcUUID) uuidEl.textContent = mcUUID;
+          }
+          // users — client stats + security
+          const userSnap = await getDoc(doc(db, "users", user.uid));
+          if (userSnap.exists()) {
+            const d = userSnap.data();
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? "—"; };
+            set("statStatus",    d.status ? d.status.charAt(0).toUpperCase() + d.status.slice(1) : "—");
+            set("statVersion",   d.clientVersion || "—");
+            set("statLogins",    d.loginCount ?? "—");
+            set("statLastLogin", fmt(d.lastLogin));
+            set("statCreated",   fmt(d.createdAt));
+            set("statHwidAt",    fmt(d.hwidBoundAt));
+            set("statHwidHash",  d.hwidHash || "—");
+          }
+          // friends subcollection
+          const friendsSnap = await getDocs(collection(db, "users", user.uid, "friends"));
+          const fl = document.getElementById("friendsList");
+          if (fl) {
+            if (friendsSnap.empty) {
+              fl.innerHTML = '<p class="friends-empty">No friends added yet.</p>';
+            } else {
+              fl.innerHTML = "";
+              friendsSnap.forEach(fdoc => {
+                const f = fdoc.data();
+                const row = document.createElement("div");
+                row.className = "friend-row";
+                row.innerHTML = `<span class="friend-name">${f.displayName || fdoc.id}</span><span class="friend-since">${fmt(f.addedAt)}</span>`;
+                fl.appendChild(row);
+              });
+            }
           }
         } catch (_) {}
+      } else {
+        clearDashboard();
       }
       window.dispatchEvent(new CustomEvent("kc:skinupdate", { detail: { mcUUID } }));
     }
@@ -1148,7 +1249,6 @@
     const googleBtn = document.getElementById("googleBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const authFormWrap = document.getElementById("authFormWrap");
-    const authExtra = document.getElementById("authExtra");
     const dashboard = document.getElementById("dashboard");
     const accountCard = document.getElementById("accountCard");
     const accountName = document.getElementById("accountName");
@@ -1176,7 +1276,6 @@
     function renderUser(user) {
       if (!user) {
         authFormWrap.classList.remove("is-hidden");
-        authExtra.classList.remove("is-hidden");
         dashboard.classList.remove("active");
         passwordSetup.classList.remove("active");
         dashboardActions.classList.add("single");
@@ -1196,7 +1295,6 @@
       }
       const requiresClientPassword = needsClientPassword(user);
       authFormWrap.classList.add("is-hidden");
-      authExtra.classList.add("is-hidden");
       dashboard.classList.add("active");
       passwordSetup.classList.toggle("active", requiresClientPassword);
       dashboardActions.classList.toggle("single", !requiresClientPassword);
