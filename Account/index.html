@@ -389,7 +389,7 @@
     }
     .dashboard {
       display: none;
-      gap: 14px;
+      gap: 0;
       margin-top: 22px;
     }
     .dashboard.active { display: grid; }
@@ -513,7 +513,7 @@
     .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
+      gap: 16px;
     }
     .dashboard-grid > article:first-child {
       grid-column: 1 / -1;
@@ -543,8 +543,25 @@
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .friend-row:last-child { border-bottom: 0; }
+    .friend-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .friend-avatar {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      image-rendering: pixelated;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+    }
     .friend-name {
       font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .friend-since {
       font-family: Arial, Helvetica, sans-serif;
@@ -554,7 +571,7 @@
       color: var(--muted);
     }
     .dashboard-panel {
-      padding: 16px;
+      padding: 20px;
       border: 1px solid var(--line);
       background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
       box-shadow: var(--shadow);
@@ -562,7 +579,7 @@
     .dashboard-panel h3 {
       font-size: 1.25rem;
       font-weight: 400;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .dashboard-panel p {
       font-size: 0.98rem;
@@ -570,7 +587,7 @@
     .dashboard-list {
       display: grid;
       gap: 10px;
-      margin-top: 12px;
+      margin-top: 14px;
     }
     .dashboard-line {
       display: flex;
@@ -1226,9 +1243,15 @@
               fl.innerHTML = "";
               friendsSnap.forEach(fdoc => {
                 const f = fdoc.data();
+                const name = f.displayName || fdoc.id;
                 const row = document.createElement("div");
                 row.className = "friend-row";
-                row.innerHTML = `<span class="friend-name">${f.displayName || fdoc.id}</span><span class="friend-since">${fmt(f.addedAt)}</span>`;
+                row.innerHTML = `
+                  <div class="friend-left">
+                    <img class="friend-avatar" src="https://mc-heads.net/avatar/${encodeURIComponent(name)}/32" alt="${name}" loading="lazy" />
+                    <span class="friend-name">${name}</span>
+                  </div>
+                  <span class="friend-since">${fmt(f.addedAt)}</span>`;
                 fl.appendChild(row);
               });
             }
