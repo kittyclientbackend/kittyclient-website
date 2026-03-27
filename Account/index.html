@@ -912,7 +912,7 @@
                     <button id="loginBtn" type="button">Sign In</button>
                   </div>
                   <button id="googleBtn" class="btn-google" type="button">Continue with Google</button>
-                  <button id="resendVerificationBtn" type="button">Resend Verification Email</button>
+                  <button id="resendVerificationBtn" type="button" style="display:none">Resend Verification Email</button>
                 </form>
               </div>
               <section id="dashboard" class="dashboard">
@@ -964,7 +964,7 @@
             </div>
           </div>
           <div class="info-fill">
-            <section id="accountCard" class="info-fill-panel account active">
+            <section id="accountCard" class="info-fill-panel account">
               <div class="account-head">
                 <div>
                   <h3>Profile details</h3>
@@ -1333,9 +1333,11 @@
       if (!user) {
         authFormWrap.classList.remove("is-hidden");
         dashboard.classList.remove("active");
+        accountCard.classList.remove("active");
         passwordSetup.classList.remove("active");
         dashboardActions.classList.add("single");
         setGooglePasswordBtn.classList.add("is-hidden");
+        resendVerificationBtn.style.display = "none";
         googlePasswordInput.value = "";
         googlePasswordConfirmInput.value = "";
         accountName.textContent = "-";
@@ -1352,6 +1354,8 @@
       const requiresClientPassword = needsClientPassword(user);
       authFormWrap.classList.add("is-hidden");
       dashboard.classList.add("active");
+      accountCard.classList.add("active");
+      resendVerificationBtn.style.display = "none";
       passwordSetup.classList.toggle("active", requiresClientPassword);
       dashboardActions.classList.toggle("single", !requiresClientPassword);
       setGooglePasswordBtn.classList.toggle("is-hidden", !requiresClientPassword);
@@ -1367,7 +1371,7 @@
       dashboardLastLogin.textContent = user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString() : "Current session";
     }
     function friendlyError(error) { const code = error && error.code ? error.code : ""; const map = { "auth/email-already-in-use": "That email is already registered. Try signing in instead.", "auth/invalid-email": "The email address format is invalid.", "auth/missing-password": "Enter a password first.", "auth/weak-password": "Password must be at least 6 characters long.", "auth/user-not-found": "No account exists for that email yet.", "auth/wrong-password": "Incorrect password.", "auth/invalid-credential": "The email or password is incorrect.", "auth/provider-already-linked": "A client password is already linked to this account.", "auth/popup-closed-by-user": "Google sign-in was cancelled before completion.", "auth/unauthorized-domain": "This domain is not authorized in Firebase Authentication settings.", "auth/operation-not-allowed": "This sign-in method is disabled in Firebase Authentication settings." }; return map[code] || error.message || "Authentication failed."; }
-    async function createAccount() { const email = emailInput.value.trim(); const password = passwordInput.value; if (!email || !password) { setStatus("Enter an email and password before creating an account.", "error"); return; } setBusy(true); setStatus("Creating account..."); try { const credential = await createUserWithEmailAndPassword(auth, email, password); await sendEmailVerification(credential.user); await signOut(auth); setStatus("Account created. Verify your email before signing in.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
+    async function createAccount() { const email = emailInput.value.trim(); const password = passwordInput.value; if (!email || !password) { setStatus("Enter an email and password before creating an account.", "error"); return; } setBusy(true); setStatus("Creating account..."); try { const credential = await createUserWithEmailAndPassword(auth, email, password); await sendEmailVerification(credential.user); await signOut(auth); setStatus("Account created. Verify your email before signing in.", "success"); resendVerificationBtn.style.display = ""; } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
     async function loginWithEmail() { const email = emailInput.value.trim(); const password = passwordInput.value; if (!email || !password) { setStatus("Enter your email and password to sign in.", "error"); return; } setBusy(true); setStatus("Signing in..."); try { const credential = await signInWithEmailAndPassword(auth, email, password); await credential.user.reload(); if (!credential.user.emailVerified) { await signOut(auth); setStatus("Verify your email before signing in. Use the verification link we sent to your inbox.", "error"); return; } setStatus("Signed in successfully.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
     async function loginWithGoogle() { setBusy(true); setStatus("Opening Google sign-in..."); try { const credential = await signInWithPopup(auth, googleProvider); if (needsClientPassword(credential.user)) setStatus("Google sign-in finished. Set a client password below before using this account in Minecraft.", "error"); else setStatus("Google account connected and signed in.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
     async function resendVerification() {
