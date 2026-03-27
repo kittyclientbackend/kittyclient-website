@@ -925,13 +925,51 @@
     /* ── PLAYER SKIN ── */
     let playerSkinMat = null;
 
+    function makeGridTexture() {
+      const size = 256;
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      const step = 16;
+      for (let x = 0; x <= size; x += step) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
+      }
+      for (let y = 0; y <= size; y += step) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      t.flipY = true;
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    }
+
+    function defaultSkinTex() {
+      if (Math.random() < 0.001) {
+        return new THREE.TextureLoader().load('Assets/Player_Model_Skins/Player1.png', t => {
+          t.magFilter = THREE.NearestFilter;
+          t.minFilter = THREE.NearestFilter;
+          t.flipY = true;
+          t.colorSpace = THREE.SRGBColorSpace;
+        });
+      }
+      return makeGridTexture();
+    }
+
     window.addEventListener('kc:skinupdate', e => {
       if (!playerSkinMat) return;
       const mcUUID = e.detail.mcUUID;
-      const url = mcUUID
-        ? `https://mc-heads.net/skin/${mcUUID}`
-        : 'Assets/Player_Model_Skins/Player1.png';
-      const t = new THREE.TextureLoader().load(url);
+      if (!mcUUID) {
+        playerSkinMat.map = defaultSkinTex();
+        playerSkinMat.needsUpdate = true;
+        return;
+      }
+      const t = new THREE.TextureLoader().load(`https://mc-heads.net/skin/${mcUUID}`);
       t.magFilter = THREE.NearestFilter;
       t.minFilter = THREE.NearestFilter;
       t.flipY = true;
@@ -986,16 +1024,11 @@
             playerObj = pivot;
 
             // Apply skin texture — raw, unlit, pixel-perfect
-            const skinTex = new THREE.TextureLoader().load('Assets/Player_Model_Skins/Player1.png');
-            skinTex.magFilter = THREE.NearestFilter;
-            skinTex.minFilter = THREE.NearestFilter;
-            skinTex.flipY = true;
-            skinTex.colorSpace = THREE.SRGBColorSpace;
             playerSkinMat = new THREE.MeshBasicMaterial({
-              map: skinTex,
+              map:         defaultSkinTex(),
               transparent: true,
-              alphaTest: 0.5,
-              side: THREE.FrontSide,
+              alphaTest:   0.5,
+              side:        THREE.FrontSide,
             });
             obj.traverse(child => {
               if (child.isMesh) child.material = playerSkinMat;
