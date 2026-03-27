@@ -274,6 +274,33 @@
       overflow: hidden;
       background: #030609;
     }
+    .p-corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .p-corner::before,
+    .p-corner::after {
+      content: "";
+      position: absolute;
+      background: rgba(255,255,255,0.55);
+    }
+    .p-corner::before { width: 2px; height: 100%; }
+    .p-corner::after  { width: 100%; height: 2px; }
+    .p-corner.tl { top: 14px; left: 14px; }
+    .p-corner.tl::before { top: 0; left: 0; }
+    .p-corner.tl::after  { top: 0; left: 0; }
+    .p-corner.tr { top: 14px; right: 14px; }
+    .p-corner.tr::before { top: 0; right: 0; left: auto; }
+    .p-corner.tr::after  { top: 0; right: 0; left: auto; }
+    .p-corner.bl { bottom: 14px; left: 14px; }
+    .p-corner.bl::before { bottom: 0; top: auto; left: 0; }
+    .p-corner.bl::after  { bottom: 0; top: auto; left: 0; }
+    .p-corner.br { bottom: 14px; right: 14px; }
+    .p-corner.br::before { bottom: 0; top: auto; right: 0; left: auto; }
+    .p-corner.br::after  { bottom: 0; top: auto; right: 0; left: auto; }
 
     #demoCanvas {
       display: block;
@@ -598,6 +625,10 @@
           <span style="margin-left:auto;opacity:0.4">Interactive client preview</span>
         </header>
         <div class="demo-wrap">
+          <div class="p-corner tl"></div>
+          <div class="p-corner tr"></div>
+          <div class="p-corner bl"></div>
+          <div class="p-corner br"></div>
           <div class="demo-hint">Drag to orbit &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Click a button to explore</div>
           <canvas id="demoCanvas" tabindex="0"></canvas>
           <div id="demoLoading">
@@ -891,6 +922,24 @@
       });
     }
 
+    /* ── PLAYER SKIN ── */
+    let playerSkinMat = null;
+
+    window.addEventListener('kc:skinupdate', e => {
+      if (!playerSkinMat) return;
+      const mcUUID = e.detail.mcUUID;
+      const url = mcUUID
+        ? `https://mc-heads.net/skin/${mcUUID}`
+        : 'Assets/Player_Model_Skins/Player1.png';
+      const t = new THREE.TextureLoader().load(url);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      t.flipY = true;
+      t.colorSpace = THREE.SRGBColorSpace;
+      playerSkinMat.map = t;
+      playerSkinMat.needsUpdate = true;
+    });
+
     /* ── GROUPS ── */
     const floatGroup = new THREE.Group();
     scene.add(floatGroup);
@@ -942,14 +991,14 @@
             skinTex.minFilter = THREE.NearestFilter;
             skinTex.flipY = true;
             skinTex.colorSpace = THREE.SRGBColorSpace;
-            const skinMat = new THREE.MeshBasicMaterial({
+            playerSkinMat = new THREE.MeshBasicMaterial({
               map: skinTex,
               transparent: true,
               alphaTest: 0.5,
               side: THREE.FrontSide,
             });
             obj.traverse(child => {
-              if (child.isMesh) child.material = skinMat;
+              if (child.isMesh) child.material = playerSkinMat;
             });
           } else {
             assignMaterials(obj, false);
@@ -1291,6 +1340,28 @@
         document.body.classList.add('is-leaving');
         setTimeout(() => { window.location.href = link.href; }, 250);
       });
+    });
+  </script>
+
+  <!-- ── SKIN SYNC ── -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const app = initializeApp({ apiKey: "AIzaSyA4_Mylnnsp0XDuf4awoJS-ro5WL-UfsZg", authDomain: "kittyclientauth.firebaseapp.com", projectId: "kittyclientauth", storageBucket: "kittyclientauth.firebasestorage.app", messagingSenderId: "950050113829", appId: "1:950050113829:web:317da48c762964e37032cc" });
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    onAuthStateChanged(auth, async user => {
+      let mcUUID = null;
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, "publicUsers", user.uid));
+          if (snap.exists()) mcUUID = snap.data().mcUUID || null;
+        } catch (_) {}
+      }
+      window.dispatchEvent(new CustomEvent("kc:skinupdate", { detail: { mcUUID } }));
     });
   </script>
 </body>

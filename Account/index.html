@@ -643,6 +643,115 @@
     .hidden-when-auth.is-hidden {
       display: none;
     }
+
+    /* ── PLAYER PANEL ── */
+    .player-panel {
+      display: grid;
+      align-content: start;
+      gap: 0;
+      height: 100%;
+    }
+    .player-canvas-wrap {
+      position: relative;
+      background: #030406;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+    #playerCanvas {
+      display: block;
+      width: 100%;
+      height: clamp(420px, 68vh, 700px);
+      cursor: grab;
+      outline: none;
+    }
+    #playerCanvas:active { cursor: grabbing; }
+    /* subtle grid overlay */
+    .player-canvas-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.013) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.013) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    /* corner brackets */
+    .p-corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .p-corner::before,
+    .p-corner::after {
+      content: "";
+      position: absolute;
+      background: rgba(255,255,255,0.55);
+    }
+    .p-corner::before { width: 2px; height: 100%; }
+    .p-corner::after  { width: 100%; height: 2px; }
+    .p-corner.tl { top: 14px; left: 14px; }
+    .p-corner.tl::before { top: 0; left: 0; }
+    .p-corner.tl::after  { top: 0; left: 0; }
+    .p-corner.tr { top: 14px; right: 14px; }
+    .p-corner.tr::before { top: 0; right: 0; left: auto; }
+    .p-corner.tr::after  { top: 0; right: 0; left: auto; }
+    .p-corner.bl { bottom: 14px; left: 14px; }
+    .p-corner.bl::before { bottom: 0; top: auto; left: 0; }
+    .p-corner.bl::after  { bottom: 0; top: auto; left: 0; }
+    .p-corner.br { bottom: 14px; right: 14px; }
+    .p-corner.br::before { bottom: 0; top: auto; right: 0; left: auto; }
+    .p-corner.br::after  { bottom: 0; top: auto; right: 0; left: auto; }
+    /* hint label */
+    .player-hint {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 0.54rem;
+      color: var(--muted);
+      pointer-events: none;
+      white-space: nowrap;
+      user-select: none;
+      z-index: 6;
+    }
+    /* entity tag at bottom of canvas */
+    /* readout rows */
+    .player-readouts {
+      border: 1px solid var(--line);
+      border-top: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006));
+    }
+    .player-readout-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .player-readout-line:last-child { border-bottom: 0; }
+    .player-readout-line span {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+    .player-readout-line strong {
+      font-size: 0.88rem;
+      font-weight: 400;
+      text-align: right;
+      max-width: 22ch;
+      word-break: break-word;
+    }
+
     @media (max-width: 1080px) {
       .layout,
       .row,
@@ -693,24 +802,26 @@
       <div class="mini">Identity / Access / Client Session</div>
     </header>
     <main class="layout">
-      <section class="hero">
-        <span class="eyebrow">01 / Account</span>
-        <h1>Your KittyClient access point.</h1>
-        <p>Create your KittyClient identity, return with email and password, or connect through Google and attach a client password.</p>
-        <div class="hero-access">
-          <h3>Quick status</h3>
-          <p>Live account state stays visible here so identity, session, and client access are always readable at a glance.</p>
-          <div class="hero-access-list">
-            <div class="hero-access-line"><span>Session</span><strong id="dashboardSession">Active</strong></div>
-            <div class="hero-access-line"><span>Provider</span><strong id="dashboardProvider">-</strong></div>
-            <div class="hero-access-line"><span>Client Login</span><strong id="dashboardClientAccess">Needs password</strong></div>
-            <div class="hero-access-line"><span>Last Login</span><strong id="dashboardLastLogin">Current session</strong></div>
-          </div>
+      <!-- PLAYER PREVIEW PANEL -->
+      <section class="player-panel">
+        <header class="section-header">
+          <span>01</span>
+          <span>Identity Preview</span>
+          <span style="margin-left:auto;opacity:0.38">Live entity model</span>
+        </header>
+        <div class="player-canvas-wrap">
+          <div class="p-corner tl"></div>
+          <div class="p-corner tr"></div>
+          <div class="p-corner bl"></div>
+          <div class="p-corner br"></div>
+          <div class="player-hint">Drag to orbit &nbsp;·&nbsp; Scroll to zoom</div>
+          <canvas id="playerCanvas" tabindex="0"></canvas>
         </div>
-        <div class="points">
-          <div class="point"><strong>Identity</strong><p>Create a recognizable KittyClient account with your display name, email, and access credentials.</p></div>
-          <div class="point"><strong>Connected access</strong><p>Use Google if you want, then attach the password your Minecraft client will use.</p></div>
-          <div class="point"><strong>Persistent session</strong><p>Your session stays ready so the platform feels immediate, premium, and continuous.</p></div>
+        <div class="player-readouts">
+          <div class="player-readout-line"><span>Session</span><strong id="dashboardSession">Inactive</strong></div>
+          <div class="player-readout-line"><span>Provider</span><strong id="dashboardProvider">—</strong></div>
+          <div class="player-readout-line"><span>Client Login</span><strong id="dashboardClientAccess">Waiting for sign-in</strong></div>
+          <div class="player-readout-line"><span>Last Login</span><strong id="dashboardLastLogin">Waiting for sign-in</strong></div>
         </div>
       </section>
       <section class="card">
@@ -726,7 +837,6 @@
             <div class="auth-shell">
               <div id="authFormWrap" class="hidden-when-auth">
                 <form>
-                  <label>Display name<input id="displayName" type="text" placeholder="KittyPlayer" autocomplete="nickname" /></label>
                   <label>Email address<input id="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
                   <label>Password<input id="password" type="password" placeholder="Minimum 6 characters" autocomplete="current-password" required /></label>
                   <div class="row">
@@ -800,16 +910,237 @@
       </section>
     </main>
   </div>
+  <!-- Three.js importmap -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <!-- 3D player viewer -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { OBJLoader }     from 'three/addons/loaders/OBJLoader.js';
+    import { MTLLoader }     from 'three/addons/loaders/MTLLoader.js';
+
+    const canvas = document.getElementById('playerCanvas');
+
+    /* ── SCENE ── */
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.FogExp2(0x000000, 0.038);
+
+    /* ── CAMERA ── */
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 300);
+    camera.position.set(0, 2, 20);
+
+    /* ── RENDERER ── */
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.NoToneMapping;
+
+    function resize() {
+      const w = canvas.clientWidth || canvas.offsetWidth || 400;
+      const h = canvas.clientHeight || canvas.offsetHeight || 420;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(canvas);
+    requestAnimationFrame(() => requestAnimationFrame(resize));
+
+    /* ── CONTROLS ── */
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping   = true;
+    controls.dampingFactor   = 0.055;
+    controls.minDistance     = 4;
+    controls.maxDistance     = 35;
+    controls.maxPolarAngle   = Math.PI * 0.56;
+    controls.autoRotate      = true;
+    controls.autoRotateSpeed = 0.4;
+    controls.target.set(0, 2, 0);
+    controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+    /* ── LIGHTS ── */
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+    const keyLight = new THREE.PointLight(0xffffff, 3, 30);
+    keyLight.position.set(3, 7, 8);
+    scene.add(keyLight);
+    const fillLight = new THREE.PointLight(0xfff0f8, 1.5, 22);
+    fillLight.position.set(-8, 1, -3);
+    scene.add(fillLight);
+    const rimLight = new THREE.PointLight(0xffffff, 1.2, 20);
+    rimLight.position.set(5, -3, -10);
+    scene.add(rimLight);
+    const topLight = new THREE.PointLight(0xfff0f8, 1.0, 18);
+    topLight.position.set(0, 10, 0);
+    scene.add(topLight);
+
+    /* ── ROOM + GRID ── */
+    const roomGeo = new THREE.BoxGeometry(80, 50, 80);
+    const roomMat = new THREE.MeshLambertMaterial({ color: 0x000000, side: THREE.BackSide });
+    scene.add(new THREE.Mesh(roomGeo, roomMat));
+    const gridFloor = new THREE.GridHelper(80, 80, 0xffffff, 0x444444);
+    gridFloor.position.y = -5;
+    scene.add(gridFloor);
+
+    /* ── GRID TEXTURE (default skin when not logged in) ── */
+    function makeGridTexture() {
+      const size = 256;
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      const step = 16;
+      for (let x = 0; x <= size; x += step) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
+      }
+      for (let y = 0; y <= size; y += step) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      return t;
+    }
+
+    /* ── MATERIALS ── */
+    const skinMat = new THREE.MeshPhongMaterial({
+      map:   makeGridTexture(),
+      color: 0xffffff,
+      side:  THREE.DoubleSide,
+    });
+    const linesMat = new THREE.MeshPhongMaterial({
+      color:             0xffffff,
+      emissive:          0xffffff,
+      emissiveIntensity: 0.6,
+      side:              THREE.DoubleSide,
+    });
+
+    /* ── LOAD PLAYER OBJ ── */
+    const activeSkinMats = [];
+    let pendingSkinUUID = undefined; // undefined = not yet received
+
+    function swapSkinTexture(mcUUID) {
+      pendingSkinUUID = mcUUID;
+      if (activeSkinMats.length === 0) return;
+
+      if (!mcUUID) {
+        const gt = makeGridTexture();
+        activeSkinMats.forEach(m => { m.map = gt; m.needsUpdate = true; });
+        return;
+      }
+
+      const url = `https://mc-heads.net/skin/${mcUUID}`;
+      const texLoader = new THREE.TextureLoader();
+      texLoader.load(
+        url,
+        t => {
+          t.magFilter = THREE.NearestFilter;
+          t.minFilter = THREE.NearestFilter;
+          activeSkinMats.forEach(m => { m.map = t; m.needsUpdate = true; });
+        },
+        undefined,
+        () => {
+          const gt = makeGridTexture();
+          activeSkinMats.forEach(m => { m.map = gt; m.needsUpdate = true; });
+        }
+      );
+    }
+
+    window.addEventListener('kc:skinupdate', e => swapSkinTexture(e.detail.mcUUID));
+
+    const BASE = '../Assets/ui3d/';
+    const mtl = new MTLLoader();
+    mtl.setPath(BASE);
+    mtl.load('3D_UI_ELEMENT_PLAYER.mtl', mats => {
+      mats.preload();
+      const obj = new OBJLoader();
+      obj.setMaterials(mats);
+      obj.setPath(BASE);
+      obj.load('3D_UI_ELEMENT_PLAYER.obj', model => {
+        model.traverse(child => {
+          if (!child.isMesh) return;
+          const raw = Array.isArray(child.material) ? child.material[0] : child.material;
+          const name = (raw?.name || '').toLowerCase();
+          if (name.includes('alpha')) {
+            const m = skinMat.clone();
+            m.transparent = true;
+            m.alphaTest   = 0.1;
+            activeSkinMats.push(m);
+            child.material = m;
+          } else {
+            const m = skinMat.clone();
+            activeSkinMats.push(m);
+            child.material = m;
+          }
+        });
+
+        // Apply any skin that arrived before the model finished loading
+        if (pendingSkinUUID !== undefined) swapSkinTexture(pendingSkinUUID);
+
+        // Scale model to a fixed height of 9 scene units
+        const box1 = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box1.getSize(size);
+        const scale = 9 / Math.max(size.x, size.y, size.z);
+        model.scale.setScalar(scale);
+
+        // Centre model at origin
+        const box2 = new THREE.Box3().setFromObject(model);
+        const centre = new THREE.Vector3();
+        box2.getCenter(centre);
+        model.position.sub(centre);
+
+        scene.add(model);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      });
+    });
+
+    /* ── RENDER LOOP ── */
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { EmailAuthProvider, getAuth, GoogleAuthProvider, browserLocalPersistence, createUserWithEmailAndPassword, linkWithCredential, onAuthStateChanged, sendEmailVerification, setPersistence, signInWithEmailAndPassword, signInWithPopup, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { EmailAuthProvider, getAuth, GoogleAuthProvider, browserLocalPersistence, createUserWithEmailAndPassword, linkWithCredential, onAuthStateChanged, sendEmailVerification, setPersistence, signInWithEmailAndPassword, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     const firebaseConfig = { apiKey: "AIzaSyA4_Mylnnsp0XDuf4awoJS-ro5WL-UfsZg", authDomain: "kittyclientauth.firebaseapp.com", projectId: "kittyclientauth", storageBucket: "kittyclientauth.firebasestorage.app", messagingSenderId: "950050113829", appId: "1:950050113829:web:317da48c762964e37032cc" };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    async function applySkin(user) {
+      let mcUUID = null;
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, "publicUsers", user.uid));
+          if (snap.exists()) {
+            mcUUID = snap.data().mcUUID || null;
+            const igName = snap.data().displayName || null;
+            const nameEl = document.getElementById("accountName");
+            if (nameEl && igName) nameEl.textContent = igName;
+          }
+        } catch (_) {}
+      }
+      window.dispatchEvent(new CustomEvent("kc:skinupdate", { detail: { mcUUID } }));
+    }
     const googleProvider = new GoogleAuthProvider();
     googleProvider.setCustomParameters({ prompt: "select_account" });
     const statusBox = document.getElementById("status");
-    const displayNameInput = document.getElementById("displayName");
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
     const createBtn = document.getElementById("createBtn");
@@ -857,7 +1188,7 @@
         accountUid.textContent = "-";
         accountProvider.textContent = "-";
         dashboardWelcome.textContent = "Signed in and ready to manage your KittyClient account.";
-        dashboardProvider.textContent = "-";
+        dashboardProvider.textContent = "—";
         dashboardSession.textContent = "Inactive";
         dashboardClientAccess.textContent = "Waiting for sign-in";
         dashboardLastLogin.textContent = "Waiting for sign-in";
@@ -870,20 +1201,20 @@
       passwordSetup.classList.toggle("active", requiresClientPassword);
       dashboardActions.classList.toggle("single", !requiresClientPassword);
       setGooglePasswordBtn.classList.toggle("is-hidden", !requiresClientPassword);
-      accountName.textContent = user.displayName || "No display name";
+      accountName.textContent = "-";
       accountEmail.textContent = user.email || "No email";
       accountUid.textContent = user.uid;
       accountProvider.textContent = getProviderLabel(user);
       dashboardWelcome.textContent = requiresClientPassword
-        ? `${user.displayName || "KittyClient User"} is signed in, but still needs a client password.`
-        : `${user.displayName || "KittyClient User"} is signed in and ready.`;
+        ? "Signed in, but still needs a client password."
+        : "Signed in and ready.";
       dashboardProvider.textContent = getProviderLabel(user);
       dashboardSession.textContent = "Active";
       dashboardClientAccess.textContent = requiresClientPassword ? "Needs password" : "Ready";
       dashboardLastLogin.textContent = user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString() : "Current session";
     }
     function friendlyError(error) { const code = error && error.code ? error.code : ""; const map = { "auth/email-already-in-use": "That email is already registered. Try signing in instead.", "auth/invalid-email": "The email address format is invalid.", "auth/missing-password": "Enter a password first.", "auth/weak-password": "Password must be at least 6 characters long.", "auth/user-not-found": "No account exists for that email yet.", "auth/wrong-password": "Incorrect password.", "auth/invalid-credential": "The email or password is incorrect.", "auth/provider-already-linked": "A client password is already linked to this account.", "auth/popup-closed-by-user": "Google sign-in was cancelled before completion.", "auth/unauthorized-domain": "This domain is not authorized in Firebase Authentication settings.", "auth/operation-not-allowed": "This sign-in method is disabled in Firebase Authentication settings." }; return map[code] || error.message || "Authentication failed."; }
-    async function createAccount() { const displayName = displayNameInput.value.trim(); const email = emailInput.value.trim(); const password = passwordInput.value; if (!email || !password) { setStatus("Enter an email and password before creating an account.", "error"); return; } setBusy(true); setStatus("Creating account..."); try { const credential = await createUserWithEmailAndPassword(auth, email, password); if (displayName) await updateProfile(credential.user, { displayName }); await sendEmailVerification(credential.user); await signOut(auth); setStatus("Account created. Verify your email before signing in.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
+    async function createAccount() { const email = emailInput.value.trim(); const password = passwordInput.value; if (!email || !password) { setStatus("Enter an email and password before creating an account.", "error"); return; } setBusy(true); setStatus("Creating account..."); try { const credential = await createUserWithEmailAndPassword(auth, email, password); await sendEmailVerification(credential.user); await signOut(auth); setStatus("Account created. Verify your email before signing in.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
     async function loginWithEmail() { const email = emailInput.value.trim(); const password = passwordInput.value; if (!email || !password) { setStatus("Enter your email and password to sign in.", "error"); return; } setBusy(true); setStatus("Signing in..."); try { const credential = await signInWithEmailAndPassword(auth, email, password); await credential.user.reload(); if (!credential.user.emailVerified) { await signOut(auth); setStatus("Verify your email before signing in. Use the verification link we sent to your inbox.", "error"); return; } setStatus("Signed in successfully.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
     async function loginWithGoogle() { setBusy(true); setStatus("Opening Google sign-in..."); try { const credential = await signInWithPopup(auth, googleProvider); if (needsClientPassword(credential.user)) setStatus("Google sign-in finished. Set a client password below before using this account in Minecraft.", "error"); else setStatus("Google account connected and signed in.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
     async function resendVerification() {
@@ -948,6 +1279,7 @@
         }
       }
       renderUser(auth.currentUser);
+      applySkin(auth.currentUser);
       if (auth.currentUser) {
         if (needsClientPassword(auth.currentUser)) setStatus("This Google account still needs a client password before it can be used in Minecraft.", "error");
         else setStatus(`Logged in as ${auth.currentUser.email || auth.currentUser.uid}.`, "success");
