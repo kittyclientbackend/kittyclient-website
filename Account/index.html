@@ -525,11 +525,22 @@
       font-family: monospace;
       letter-spacing: 0.04em;
     }
-    .friends-list {
-      display: grid;
-      gap: 8px;
-      margin-top: 4px;
+    .friends-panel {
+      display: flex;
+      flex-direction: column;
     }
+    .friends-list {
+      flex: 1;
+      margin-top: 14px;
+      overflow-y: auto;
+      max-height: 280px;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.14) transparent;
+    }
+    .friends-list::-webkit-scrollbar { width: 4px; }
+    .friends-list::-webkit-scrollbar-track { background: transparent; }
+    .friends-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 2px; }
     .friends-empty {
       color: var(--muted);
       font-size: 0.88rem;
@@ -539,10 +550,10 @@
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      padding: 10px 0;
+      padding: 9px 0;
       border-bottom: 1px solid rgba(255,255,255,0.06);
     }
-    .friend-row:last-child { border-bottom: 0; }
+    .friend-row:last-child { border-bottom: 0; padding-bottom: 0; }
     .friend-left {
       display: flex;
       align-items: center;
@@ -550,15 +561,15 @@
       min-width: 0;
     }
     .friend-avatar {
-      width: 32px;
-      height: 32px;
+      width: 30px;
+      height: 30px;
       flex-shrink: 0;
       image-rendering: pixelated;
       border: 1px solid rgba(255,255,255,0.12);
       background: rgba(255,255,255,0.04);
     }
     .friend-name {
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -937,18 +948,8 @@
                     </div>
                   </article>
 
-                  <!-- Security -->
-                  <article class="dashboard-panel">
-                    <span class="muted-tag">Security</span>
-                    <h3>Device</h3>
-                    <div class="dashboard-list">
-                      <div class="dashboard-line"><span>HWID Bound</span><strong id="statHwidAt">—</strong></div>
-                      <div class="dashboard-line"><span>HWID Hash</span><strong id="statHwidHash" class="hwid-hash">—</strong></div>
-                    </div>
-                  </article>
-
                   <!-- Friends -->
-                  <article class="dashboard-panel">
+                  <article class="dashboard-panel friends-panel">
                     <span class="muted-tag">Social</span>
                     <h3>Friends</h3>
                     <div id="friendsList" class="friends-list">
@@ -1199,7 +1200,7 @@
       return new Date(ts.seconds * 1000).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
     }
     function clearDashboard() {
-      ["statStatus","statVersion","statLogins","statLastLogin","statCreated","statHwidAt","statHwidHash","accountMcUuid"].forEach(id => {
+      ["statStatus","statVersion","statLogins","statLastLogin","statCreated","accountMcUuid"].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.textContent = "—";
       });
@@ -1230,8 +1231,6 @@
             set("statLogins",    d.loginCount ?? "—");
             set("statLastLogin", fmt(d.lastLogin));
             set("statCreated",   fmt(d.createdAt));
-            set("statHwidAt",    fmt(d.hwidBoundAt));
-            set("statHwidHash",  d.hwidHash || "—");
           }
           // friends subcollection
           const friendsSnap = await getDocs(collection(db, "users", user.uid, "friends"));
@@ -1244,14 +1243,31 @@
               friendsSnap.forEach(fdoc => {
                 const f = fdoc.data();
                 const name = f.displayName || fdoc.id;
+
                 const row = document.createElement("div");
                 row.className = "friend-row";
-                row.innerHTML = `
-                  <div class="friend-left">
-                    <img class="friend-avatar" src="https://mc-heads.net/avatar/${encodeURIComponent(name)}/32" alt="${name}" loading="lazy" />
-                    <span class="friend-name">${name}</span>
-                  </div>
-                  <span class="friend-since">${fmt(f.addedAt)}</span>`;
+
+                const left = document.createElement("div");
+                left.className = "friend-left";
+
+                const avatar = document.createElement("img");
+                avatar.className = "friend-avatar";
+                avatar.src = "https://mc-heads.net/avatar/" + encodeURIComponent(name) + "/32";
+                avatar.alt = name;          // safe — set as property, not innerHTML
+                avatar.loading = "lazy";
+
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "friend-name";
+                nameSpan.textContent = name; // safe — textContent never parses HTML
+
+                const sinceSpan = document.createElement("span");
+                sinceSpan.className = "friend-since";
+                sinceSpan.textContent = fmt(f.addedAt);
+
+                left.appendChild(avatar);
+                left.appendChild(nameSpan);
+                row.appendChild(left);
+                row.appendChild(sinceSpan);
                 fl.appendChild(row);
               });
             }
