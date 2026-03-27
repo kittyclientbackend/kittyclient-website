@@ -924,6 +924,7 @@
 
     /* ── PLAYER SKIN ── */
     let playerSkinMat = null;
+    let pendingMcUUID = undefined;
 
     function makeGridTexture() {
       const size = 256;
@@ -962,6 +963,7 @@
     }
 
     window.addEventListener('kc:skinupdate', e => {
+      pendingMcUUID = e.detail.mcUUID;
       if (!playerSkinMat) return;
       const mcUUID = e.detail.mcUUID;
       if (!mcUUID) {
@@ -1030,6 +1032,10 @@
               alphaTest:   0.5,
               side:        THREE.FrontSide,
             });
+            // Apply any skin that arrived before the model finished loading
+            if (pendingMcUUID !== undefined) {
+              window.dispatchEvent(new CustomEvent('kc:skinupdate', { detail: { mcUUID: pendingMcUUID } }));
+            }
             obj.traverse(child => {
               if (child.isMesh) child.material = playerSkinMat;
             });
