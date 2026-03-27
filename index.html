@@ -178,6 +178,15 @@
       max-width: 13ch;
       margin-bottom: 26px;
     }
+    #demoPanelDesc.is-typing::after {
+      content: "";
+      display: inline-block;
+      width: 1px; height: 0.8em;
+      margin-left: 0.05em;
+      background: currentColor;
+      vertical-align: 0.04em;
+      animation: caret 0.85s steps(1) infinite;
+    }
     #heroTitle.is-typing::after {
       content: "";
       display: inline-block;
@@ -1171,8 +1180,19 @@
       if (!info) return;
       panelLabel.textContent = info.label;
       panelTitle.textContent = info.title;
-      panelDesc.textContent  = info.desc;
+      panelDesc.textContent  = '';
       panel.classList.add('visible');
+      panelDesc.classList.add('is-typing');
+      let di = 0;
+      const dtext = info.desc;
+      const dstep = Math.max(16, Math.round(900 / dtext.length));
+      clearTimeout(panelDesc._typeTimer);
+      const dtick = () => {
+        panelDesc.textContent = dtext.slice(0, ++di);
+        if (di < dtext.length) panelDesc._typeTimer = setTimeout(dtick, dstep);
+        else panelDesc.classList.remove('is-typing');
+      };
+      panelDesc._typeTimer = setTimeout(dtick, 60);
       // Reset any in-progress anim on another button
       if (clickAnim) clickAnim.btn.obj.scale.set(1, 1, 1);
       clickAnim = { btn: hit, startMs: performance.now() };
