@@ -972,9 +972,8 @@
               <div class="account-grid">
                 <div class="account-item"><span class="field-tag">Name</span><strong id="accountName">-</strong></div>
                 <div class="account-item"><span class="field-tag">Email</span><strong id="accountEmail">-</strong></div>
-                <div class="account-item"><span class="field-tag">User ID</span><strong id="accountUid">-</strong></div>
-                <div class="account-item"><span class="field-tag">Provider</span><strong id="accountProvider">-</strong></div>
                 <div class="account-item"><span class="field-tag">Minecraft UUID</span><strong id="accountMcUuid">-</strong></div>
+                <div class="account-item"><span class="field-tag">Provider</span><strong id="accountProvider">-</strong></div>
               </div>
             </section>
           </div>
@@ -1292,7 +1291,6 @@
     const accountCard = document.getElementById("accountCard");
     const accountName = document.getElementById("accountName");
     const accountEmail = document.getElementById("accountEmail");
-    const accountUid = document.getElementById("accountUid");
     const accountProvider = document.getElementById("accountProvider");
     const dashboardWelcome = document.getElementById("dashboardWelcome");
     const dashboardProvider = document.getElementById("dashboardProvider");
@@ -1323,7 +1321,6 @@
         googlePasswordConfirmInput.value = "";
         accountName.textContent = "-";
         accountEmail.textContent = "-";
-        accountUid.textContent = "-";
         accountProvider.textContent = "-";
         dashboardWelcome.textContent = "Signed in and ready to manage your KittyClient account.";
         dashboardProvider.textContent = "—";
@@ -1340,7 +1337,6 @@
       setGooglePasswordBtn.classList.toggle("is-hidden", !requiresClientPassword);
       accountName.textContent = "-";
       accountEmail.textContent = user.email || "No email";
-      accountUid.textContent = user.uid;
       accountProvider.textContent = getProviderLabel(user);
       dashboardWelcome.textContent = requiresClientPassword
         ? "Signed in, but still needs a client password."
