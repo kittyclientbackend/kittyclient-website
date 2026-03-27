@@ -1211,8 +1211,8 @@
     async function applySkin(user) {
       let mcUUID = null;
       if (user) {
+        // publicUsers — in-game name + mcUUID
         try {
-          // publicUsers — in-game name + mcUUID
           const pubSnap = await getDoc(doc(db, "publicUsers", user.uid));
           if (pubSnap.exists()) {
             mcUUID = pubSnap.data().mcUUID || null;
@@ -1222,7 +1222,10 @@
             const uuidEl = document.getElementById("accountMcUuid");
             if (uuidEl && mcUUID) uuidEl.textContent = mcUUID;
           }
-          // users — client stats + security
+        } catch (_) {}
+
+        // users — client stats
+        try {
           const userSnap = await getDoc(doc(db, "users", user.uid));
           if (userSnap.exists()) {
             const d = userSnap.data();
@@ -1233,7 +1236,10 @@
             set("statLastLogin", fmt(d.lastLogin));
             set("statCreated",   fmt(d.createdAt));
           }
-          // presence
+        } catch (_) {}
+
+        // presence
+        try {
           const presenceSnap = await getDoc(doc(db, "users", user.uid, "presence", "status"));
           const state = presenceSnap.exists() ? (presenceSnap.data().state || "offline") : "offline";
           const sessionEl = document.getElementById("dashboardSession");
@@ -1241,7 +1247,10 @@
             sessionEl.textContent = state === "online" ? "Online" : "Offline";
             sessionEl.dataset.state = state;
           }
-          // friends subcollection
+        } catch (_) {}
+
+        // friends subcollection
+        try {
           const friendsSnap = await getDocs(collection(db, "users", user.uid, "friends"));
           const fl = document.getElementById("friendsList");
           if (fl) {
@@ -1262,12 +1271,12 @@
                 const avatar = document.createElement("img");
                 avatar.className = "friend-avatar";
                 avatar.src = "https://mc-heads.net/avatar/" + encodeURIComponent(name) + "/32";
-                avatar.alt = name;          // safe — set as property, not innerHTML
+                avatar.alt = name;
                 avatar.loading = "lazy";
 
                 const nameSpan = document.createElement("span");
                 nameSpan.className = "friend-name";
-                nameSpan.textContent = name; // safe — textContent never parses HTML
+                nameSpan.textContent = name;
 
                 const sinceSpan = document.createElement("span");
                 sinceSpan.className = "friend-since";
