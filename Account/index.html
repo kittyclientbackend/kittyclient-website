@@ -1303,11 +1303,12 @@
                 const name = f.displayName || fdoc.id;
                 const friendUid = f.uid || fdoc.id;
 
-                let onlineState = "unknown";
+                let onlineState = "offline";
                 try {
                   const presSnap = await getDoc(doc(db, "users", friendUid, "presence", "status"));
-                  if (presSnap.exists()) onlineState = presSnap.data().state || "unknown";
-                } catch (_) {}
+                  if (presSnap.exists()) onlineState = presSnap.data().state || "offline";
+                  else console.warn("[friends] presence doc missing for", friendUid);
+                } catch (e) { console.error("[friends] presence read failed for", friendUid, e); }
 
                 const row = document.createElement("div");
                 row.className = "friend-row";
@@ -1340,7 +1341,7 @@
                 const statusBadge = document.createElement("span");
                 statusBadge.className = "friend-status";
                 statusBadge.dataset.state = onlineState;
-                statusBadge.textContent = onlineState === "online" ? "Online" : onlineState === "offline" ? "Offline" : "Unknown";
+                statusBadge.textContent = onlineState === "online" ? "Online" : "Offline";
 
                 row.appendChild(left);
                 row.appendChild(statusBadge);
