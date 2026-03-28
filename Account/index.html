@@ -588,39 +588,14 @@
       min-width: 0;
     }
     .friend-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      padding: 3px 9px;
-      border-radius: 20px;
       font-family: Arial, Helvetica, sans-serif;
-      font-size: 0.68rem;
-      letter-spacing: 0.07em;
       text-transform: uppercase;
-      flex-shrink: 0;
-      border: 1px solid transparent;
-    }
-    .friend-status::before {
-      content: "";
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: currentColor;
+      letter-spacing: 0.12em;
+      font-size: 0.58rem;
       flex-shrink: 0;
     }
-    .friend-status[data-state="online"] {
-      color: #4ade80;
-      background: rgba(74,222,128,0.08);
-      border-color: rgba(74,222,128,0.22);
-    }
-    .friend-status[data-state="online"]::before {
-      box-shadow: 0 0 5px #4ade80;
-    }
-    .friend-status[data-state="offline"] {
-      color: #9ca3af;
-      background: rgba(156,163,175,0.07);
-      border-color: rgba(156,163,175,0.15);
-    }
+    .friend-status[data-state="online"]  { color: #4ade80; }
+    .friend-status[data-state="offline"] { color: var(--muted); }
     .dashboard-panel {
       padding: 20px;
       border: 1px solid var(--line);
