@@ -581,22 +581,46 @@
       font-size: 0.58rem;
       color: var(--muted);
     }
-    .friend-avatar-wrap {
-      position: relative;
+    .friend-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .friend-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+      border: 1px solid transparent;
+    }
+    .friend-status::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
       flex-shrink: 0;
     }
-    .friend-dot {
-      position: absolute;
-      bottom: -2px;
-      right: -2px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      border: 2px solid #0d0d0f;
-      background: rgba(255,255,255,0.18);
+    .friend-status[data-state="online"] {
+      color: #4ade80;
+      background: rgba(74,222,128,0.08);
+      border-color: rgba(74,222,128,0.22);
     }
-    .friend-dot[data-state="online"]  { background: #4ade80; }
-    .friend-dot[data-state="offline"] { background: #6b7280; }
+    .friend-status[data-state="online"]::before {
+      box-shadow: 0 0 5px #4ade80;
+    }
+    .friend-status[data-state="offline"] {
+      color: #9ca3af;
+      background: rgba(156,163,175,0.07);
+      border-color: rgba(156,163,175,0.15);
+    }
     .dashboard-panel {
       padding: 20px;
       border: 1px solid var(--line);
@@ -1291,22 +1315,14 @@
                 const left = document.createElement("div");
                 left.className = "friend-left";
 
-                const avatarWrap = document.createElement("div");
-                avatarWrap.className = "friend-avatar-wrap";
-
                 const avatar = document.createElement("img");
                 avatar.className = "friend-avatar";
                 avatar.src = "https://mc-heads.net/avatar/" + encodeURIComponent(name) + "/32";
                 avatar.alt = name;
                 avatar.loading = "lazy";
 
-                const dot = document.createElement("span");
-                dot.className = "friend-dot";
-                dot.dataset.state = onlineState;
-                dot.title = onlineState === "online" ? "Online" : onlineState === "offline" ? "Offline" : "Unknown";
-
-                avatarWrap.appendChild(avatar);
-                avatarWrap.appendChild(dot);
+                const info = document.createElement("div");
+                info.className = "friend-info";
 
                 const nameSpan = document.createElement("span");
                 nameSpan.className = "friend-name";
@@ -1316,10 +1332,18 @@
                 sinceSpan.className = "friend-since";
                 sinceSpan.textContent = fmt(f.addedAt);
 
-                left.appendChild(avatarWrap);
-                left.appendChild(nameSpan);
+                info.appendChild(nameSpan);
+                info.appendChild(sinceSpan);
+                left.appendChild(avatar);
+                left.appendChild(info);
+
+                const statusBadge = document.createElement("span");
+                statusBadge.className = "friend-status";
+                statusBadge.dataset.state = onlineState;
+                statusBadge.textContent = onlineState === "online" ? "Online" : onlineState === "offline" ? "Offline" : "Unknown";
+
                 row.appendChild(left);
-                row.appendChild(sinceSpan);
+                row.appendChild(statusBadge);
                 fl.appendChild(row);
               }
             }
