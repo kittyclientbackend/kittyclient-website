@@ -832,7 +832,17 @@
       max-width: 22ch;
       word-break: break-word;
     }
+    #dashboardSession { display: inline-flex; align-items: center; gap: 6px; }
+    #dashboardSession::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      flex-shrink: 0;
+    }
     #dashboardSession[data-state="online"]  { color: #a8e6a3; }
+    #dashboardSession[data-state="online"]::before  { box-shadow: 0 0 5px #a8e6a3; }
     #dashboardSession[data-state="offline"] { color: var(--muted); }
 
     @media (max-width: 1080px) {
