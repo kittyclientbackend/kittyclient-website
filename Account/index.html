@@ -581,6 +581,22 @@
       font-size: 0.58rem;
       color: var(--muted);
     }
+    .friend-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .friend-dot {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      border: 2px solid #0d0d0f;
+      background: rgba(255,255,255,0.18);
+    }
+    .friend-dot[data-state="online"]  { background: #4ade80; }
+    .friend-dot[data-state="offline"] { background: #6b7280; }
     .dashboard-panel {
       padding: 20px;
       border: 1px solid var(--line);
@@ -1258,9 +1274,16 @@
               fl.innerHTML = '<p class="friends-empty">No friends added yet.</p>';
             } else {
               fl.innerHTML = "";
-              friendsSnap.forEach(fdoc => {
+              for (const fdoc of friendsSnap.docs) {
                 const f = fdoc.data();
                 const name = f.displayName || fdoc.id;
+                const friendUid = f.uid || fdoc.id;
+
+                let onlineState = "unknown";
+                try {
+                  const presSnap = await getDoc(doc(db, "users", friendUid, "presence", "status"));
+                  if (presSnap.exists()) onlineState = presSnap.data().state || "unknown";
+                } catch (_) {}
 
                 const row = document.createElement("div");
                 row.className = "friend-row";
@@ -1268,11 +1291,22 @@
                 const left = document.createElement("div");
                 left.className = "friend-left";
 
+                const avatarWrap = document.createElement("div");
+                avatarWrap.className = "friend-avatar-wrap";
+
                 const avatar = document.createElement("img");
                 avatar.className = "friend-avatar";
                 avatar.src = "https://mc-heads.net/avatar/" + encodeURIComponent(name) + "/32";
                 avatar.alt = name;
                 avatar.loading = "lazy";
+
+                const dot = document.createElement("span");
+                dot.className = "friend-dot";
+                dot.dataset.state = onlineState;
+                dot.title = onlineState === "online" ? "Online" : onlineState === "offline" ? "Offline" : "Unknown";
+
+                avatarWrap.appendChild(avatar);
+                avatarWrap.appendChild(dot);
 
                 const nameSpan = document.createElement("span");
                 nameSpan.className = "friend-name";
@@ -1282,12 +1316,12 @@
                 sinceSpan.className = "friend-since";
                 sinceSpan.textContent = fmt(f.addedAt);
 
-                left.appendChild(avatar);
+                left.appendChild(avatarWrap);
                 left.appendChild(nameSpan);
                 row.appendChild(left);
                 row.appendChild(sinceSpan);
                 fl.appendChild(row);
-              });
+              }
             }
           }
         } catch (_) {}
