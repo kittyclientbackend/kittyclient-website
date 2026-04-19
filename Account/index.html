@@ -1562,7 +1562,8 @@
         if (subSnap.exists()) {
           const d      = subSnap.data();
           const active = ["active", "trialing"].includes(d.status);
-          const end    = d.currentPeriodEnd?.toDate?.() || null;
+          const endMs  = d.currentPeriodEnd * 1000;
+          const end    = d.currentPeriodEnd && !isNaN(endMs) ? new Date(endMs) : null;
           const endStr = end ? end.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "—";
 
           badge.className      = active ? "sub-badge active" : "sub-badge inactive";
