@@ -1,0 +1,1672 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KittyClient Account</title>
+  <meta name="description" content="Create a KittyClient account, sign in with email, or continue with Google." />
+  <style>
+    :root {
+      --bg: #111111;
+      --panel: #171717;
+      --line: rgba(255, 255, 255, 0.16);
+      --line-strong: rgba(255, 255, 255, 0.34);
+      --text: #f4f1e8;
+      --muted: rgba(244, 241, 232, 0.68);
+      --good: #e7f4de;
+      --bad: #ffd9d9;
+      --max: 1320px;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255,255,255,0.05), transparent 30%),
+        radial-gradient(circle at 100% 20%, rgba(255,255,255,0.04), transparent 28%),
+        linear-gradient(180deg, #0e0e0e 0%, var(--bg) 100%);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.78), rgba(0,0,0,0.18));
+    }
+    a { color: inherit; }
+    button, input { font: inherit; }
+    h1, h2, h3, p { margin: 0; }
+    .page {
+      width: min(var(--max), calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 18px 0 56px;
+      position: relative;
+      z-index: 1;
+    }
+    .main-header {
+      position: sticky;
+      top: 16px;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      background: rgba(17, 17, 17, 0.88);
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      transform: scaleX(0.985) scaleY(0.992) translateY(-6px);
+      transform-origin: top center;
+      transition: opacity 300ms ease, transform 620ms cubic-bezier(0.22, 1, 0.36, 1), padding 620ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.is-ready .main-header {
+      opacity: 1;
+      transform: scaleX(1) scaleY(1) translateY(0);
+    }
+    body.is-leaving .main-header {
+      opacity: 0.96;
+      transform: scaleX(0.992) scaleY(0.996) translateY(-3px);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateX(-18px);
+      transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .brand img {
+      width: 48px;
+      height: 48px;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      padding: 4px;
+    }
+    .brand-copy,
+    .nav,
+    .nav a,
+    .eyebrow,
+    .section-header,
+    .status,
+    label,
+    .mini,
+    .field-tag {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+    .brand-copy { display: grid; gap: 2px; }
+    .brand-copy strong { font-size: 0.78rem; }
+    .brand-copy span { font-size: 0.62rem; color: var(--muted); }
+    .nav {
+      justify-self: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .nav a {
+      position: relative;
+      padding: 10px 12px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 0.66rem;
+      border: 1px solid transparent;
+      opacity: 1;
+      transform: translateY(8px);
+      transition: color 220ms ease, border-color 220ms ease, background 220ms ease, transform 320ms ease, opacity 320ms ease;
+    }
+    .nav a:hover,
+    .nav a.active {
+      color: var(--text);
+      border-color: var(--line);
+      background: rgba(255,255,255,0.04);
+      transform: translateY(-1px);
+    }
+    .layout {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 420ms ease, transform 420ms ease;
+    }
+    body.is-ready .layout {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    body.is-leaving .layout {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    .mini {
+      justify-self: end;
+      color: var(--muted);
+      font-size: 0.64rem;
+      opacity: 0;
+      transform: translateX(18px);
+      transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.is-ready .brand,
+    body.is-ready .nav,
+    body.is-ready .mini {
+      opacity: 1;
+      transform: translate(0, 0);
+    }
+    body.is-ready .nav a {
+      transform: translateY(0);
+    }
+    body.is-leaving .brand {
+      opacity: 0;
+      transform: translateX(-14px);
+    }
+    body.is-leaving .nav {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    body.is-leaving .mini {
+      opacity: 0;
+      transform: translateX(14px);
+    }
+    body.is-leaving .nav a {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+    .nav a:nth-child(1) { transition-delay: 0ms; }
+    .nav a:nth-child(2) { transition-delay: 35ms; }
+    .nav a:nth-child(3) { transition-delay: 70ms; }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(360px, 0.78fr) minmax(0, 1.22fr);
+      gap: 22px;
+      padding-top: 34px;
+      align-items: stretch;
+    }
+    .hero,
+    .card,
+    .point,
+    .status,
+    .account-item {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      box-shadow: var(--shadow);
+    }
+    .hero,
+    .card { padding: 24px; }
+    .hero {
+      display: grid;
+      gap: 18px;
+      align-content: start;
+      height: 100%;
+      padding: 30px 36px;
+    }
+    .card { height: 100%; }
+    .eyebrow { color: var(--muted); font-size: 0.68rem; }
+    h1 {
+      max-width: 8ch;
+      font-size: clamp(3rem, 7vw, 5.8rem);
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+      font-weight: 400;
+    }
+    p { color: var(--muted); line-height: 1.78; }
+    .hero > p {
+      max-width: 30ch;
+    }
+    .hero-access {
+      display: grid;
+      gap: 10px;
+      margin-right: 0;
+      padding: 22px 22px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.015);
+    }
+    .hero-access h3 {
+      font-size: 1.18rem;
+      font-weight: 400;
+    }
+    .hero-access p {
+      max-width: 42ch;
+    }
+    .hero-access-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .hero-access-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .hero-access-line:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+    .hero-access-line span {
+      color: var(--muted);
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+    }
+    .hero-access-line strong {
+      text-align: right;
+      max-width: 13ch;
+      padding-left: 14px;
+      font-size: 0.95rem;
+      font-weight: 400;
+    }
+    .points {
+      display: grid;
+      gap: 10px;
+      padding-right: 0;
+    }
+    .point { padding: 16px; }
+    .point p {
+      max-width: 30ch;
+    }
+    .point strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--text);
+      font-weight: 400;
+      font-size: 1.08rem;
+    }
+    .section-header {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding-bottom: 14px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.68rem;
+    }
+    .card h2 {
+      font-size: clamp(2rem, 4vw, 3.3rem);
+      line-height: 0.95;
+      font-weight: 400;
+      letter-spacing: -0.05em;
+      max-width: 14ch;
+    }
+    .small {
+      margin-top: 10px;
+      max-width: 56ch;
+    }
+    .status {
+      min-height: 56px;
+      margin-top: 20px;
+      padding: 14px 16px;
+      color: var(--muted);
+      font-size: 0.68rem;
+      line-height: 1.7;
+    }
+    .status.success {
+      color: var(--good);
+      border-color: rgba(231, 244, 222, 0.32);
+      background: rgba(231, 244, 222, 0.06);
+    }
+    .status.error {
+      color: var(--bad);
+      border-color: rgba(255, 217, 217, 0.35);
+      background: rgba(255, 217, 217, 0.06);
+    }
+    form {
+      display: grid;
+      gap: 16px;
+      margin-top: 22px;
+    }
+    .auth-shell {
+      display: grid;
+      gap: 22px;
+      align-content: start;
+    }
+    .card-body {
+      display: grid;
+      gap: 22px;
+      align-content: start;
+      min-height: calc(100% - 84px);
+    }
+    .auth-extra {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 18px;
+    }
+    .auth-extra.is-hidden {
+      display: none;
+    }
+    .auth-panel {
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      box-shadow: var(--shadow);
+    }
+    .auth-panel h3 {
+      font-size: 1.18rem;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    .auth-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .auth-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .auth-line:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+    .auth-line span {
+      color: var(--muted);
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+    }
+    .auth-line strong {
+      text-align: right;
+      font-size: 0.95rem;
+      font-weight: 400;
+    }
+    .dashboard {
+      display: none;
+      gap: 0;
+      margin-top: 22px;
+    }
+    .dashboard.active { display: grid; }
+    .password-setup {
+      display: grid;
+      gap: 14px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      background: rgba(255,255,255,0.03);
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: max-height 240ms ease, opacity 220ms ease, transform 220ms ease, margin 220ms ease, padding 220ms ease, border-color 220ms ease;
+    }
+    .password-setup.active {
+      max-height: 320px;
+      padding: 16px;
+      border-color: rgba(255,255,255,0.12);
+      opacity: 1;
+      pointer-events: auto;
+      visibility: visible;
+      transform: translateY(0);
+      margin-top: 10px;
+    }
+    .password-setup h3 {
+      font-size: 1.1rem;
+      font-weight: 400;
+    }
+    .password-setup p {
+      color: var(--muted);
+      max-width: 54ch;
+      font-size: 0.95rem;
+    }
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.65rem;
+    }
+    input {
+      width: 100%;
+      min-height: 52px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.025);
+      color: var(--text);
+      outline: none;
+    }
+    input:focus { border-color: var(--line-strong); }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    button {
+      min-height: 52px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+      cursor: pointer;
+      transition: 180ms ease;
+    }
+    button:hover { background: rgba(255,255,255,0.08); }
+    button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+    .btn-primary {
+      background: var(--text);
+      color: #121212;
+      border-color: transparent;
+    }
+    .btn-google {
+      background: #e9e5da;
+      color: #111111;
+      border-color: transparent;
+    }
+    .account {
+      display: none;
+      gap: 14px;
+    }
+    .account.active { display: grid; }
+    .account-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 2px;
+    }
+    .account-head h3 {
+      font-size: 1.4rem;
+      font-weight: 400;
+    }
+    .account-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .account-item {
+      min-height: 104px;
+      padding: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.015);
+    }
+    .field-tag {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--muted);
+      font-size: 0.62rem;
+    }
+    .account-item strong {
+      display: block;
+      word-break: break-word;
+      font-size: 1rem;
+      line-height: 1.45;
+      font-weight: 400;
+    }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+    .dashboard-grid > article:first-child {
+      grid-column: 1 / -1;
+    }
+    .hwid-hash {
+      font-size: 0.68rem !important;
+      word-break: break-all;
+      opacity: 0.7;
+      font-family: monospace;
+      letter-spacing: 0.04em;
+    }
+    .friends-panel {
+      display: flex;
+      flex-direction: column;
+    }
+    .friends-list {
+      flex: 1;
+      margin-top: 14px;
+      overflow-y: auto;
+      max-height: 280px;
+      padding-right: 4px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.14) transparent;
+    }
+    .friends-list::-webkit-scrollbar { width: 4px; }
+    .friends-list::-webkit-scrollbar-track { background: transparent; }
+    .friends-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 2px; }
+    .friends-empty {
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+    .friend-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .friend-row:last-child { border-bottom: 0; padding-bottom: 0; }
+    .friend-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .friend-avatar {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      image-rendering: pixelated;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+    }
+    .friend-name {
+      font-size: 0.92rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .friend-since {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.58rem;
+      color: var(--muted);
+    }
+    .friend-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+    .friend-status {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.58rem;
+      flex-shrink: 0;
+    }
+    .friend-status[data-state="online"]  { color: #4ade80; }
+    .friend-status[data-state="offline"] { color: var(--muted); }
+    .dashboard-panel {
+      padding: 20px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      box-shadow: var(--shadow);
+    }
+    .dashboard-panel h3 {
+      font-size: 1.25rem;
+      font-weight: 400;
+      margin-bottom: 10px;
+    }
+    .dashboard-panel p {
+      font-size: 0.98rem;
+    }
+    .dashboard-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .dashboard-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .dashboard-line:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .dashboard-line span,
+    .dashboard-actions a,
+    .dashboard-actions button,
+    .muted-tag {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+    }
+    .dashboard-line span,
+    .muted-tag {
+      color: var(--muted);
+    }
+    .dashboard-line strong {
+      text-align: right;
+      font-size: 0.94rem;
+      font-weight: 400;
+      word-break: break-word;
+    }
+    .dashboard-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .dashboard-actions.single {
+      grid-template-columns: 1fr;
+    }
+    .dashboard-actions button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      width: 100%;
+      padding: 0 18px;
+      text-decoration: none;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      color: var(--text);
+    }
+    .dashboard-actions .btn-primary {
+      background: var(--text);
+      color: #121212;
+      border-color: transparent;
+    }
+    .dashboard-actions .is-hidden {
+      display: none;
+    }
+    .info-fill {
+      display: block;
+      margin-top: auto;
+    }
+    .info-fill-panel {
+      padding: 16px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      box-shadow: var(--shadow);
+    }
+    .info-fill-panel h3 {
+      font-size: 1.18rem;
+      font-weight: 400;
+      margin-bottom: 8px;
+    }
+    .info-fill-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .info-fill-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    .info-fill-line:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+    .info-fill-line span {
+      color: var(--muted);
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+    }
+    .info-fill-line strong {
+      text-align: right;
+      font-size: 0.95rem;
+      font-weight: 400;
+      word-break: break-word;
+    }
+    .hidden-when-auth {
+      display: block;
+    }
+    .hidden-when-auth.is-hidden {
+      display: none;
+    }
+
+    /* ── PLAYER PANEL ── */
+    .player-panel {
+      display: grid;
+      align-content: start;
+      gap: 0;
+      height: 100%;
+    }
+    .player-canvas-wrap {
+      position: relative;
+      background: #030406;
+      border: 1px solid var(--line);
+      overflow: hidden;
+    }
+    #playerCanvas {
+      display: block;
+      width: 100%;
+      height: clamp(420px, 68vh, 700px);
+      cursor: grab;
+      outline: none;
+    }
+    #playerCanvas:active { cursor: grabbing; }
+    /* subtle grid overlay */
+    .player-canvas-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.013) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.013) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    /* corner brackets */
+    .p-corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .p-corner::before,
+    .p-corner::after {
+      content: "";
+      position: absolute;
+      background: rgba(255,255,255,0.55);
+    }
+    .p-corner::before { width: 2px; height: 100%; }
+    .p-corner::after  { width: 100%; height: 2px; }
+    .p-corner.tl { top: 14px; left: 14px; }
+    .p-corner.tl::before { top: 0; left: 0; }
+    .p-corner.tl::after  { top: 0; left: 0; }
+    .p-corner.tr { top: 14px; right: 14px; }
+    .p-corner.tr::before { top: 0; right: 0; left: auto; }
+    .p-corner.tr::after  { top: 0; right: 0; left: auto; }
+    .p-corner.bl { bottom: 14px; left: 14px; }
+    .p-corner.bl::before { bottom: 0; top: auto; left: 0; }
+    .p-corner.bl::after  { bottom: 0; top: auto; left: 0; }
+    .p-corner.br { bottom: 14px; right: 14px; }
+    .p-corner.br::before { bottom: 0; top: auto; right: 0; left: auto; }
+    .p-corner.br::after  { bottom: 0; top: auto; right: 0; left: auto; }
+    /* hint label */
+    .player-hint {
+      position: absolute;
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 0.54rem;
+      color: var(--muted);
+      pointer-events: none;
+      white-space: nowrap;
+      user-select: none;
+      z-index: 6;
+    }
+    /* entity tag at bottom of canvas */
+    /* readout rows */
+    .player-readouts {
+      border: 1px solid var(--line);
+      border-top: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006));
+    }
+    .player-readout-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      padding: 13px 18px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .player-readout-line:last-child { border-bottom: 0; }
+    .player-readout-line span {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+    .player-readout-line strong {
+      font-size: 0.88rem;
+      font-weight: 400;
+      text-align: right;
+      max-width: 22ch;
+      word-break: break-word;
+    }
+    #dashboardSession[data-state="online"]  { color: #a8e6a3; }
+    #dashboardSession[data-state="offline"] { color: var(--muted); }
+
+    /* ── SUBSCRIPTION PANEL ── */
+    .sub-panel {
+      grid-column: 1 / -1;
+      padding: 20px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      box-shadow: var(--shadow);
+    }
+    .sub-panel h3 {
+      font-size: 1.25rem; font-weight: 400; margin-bottom: 10px;
+    }
+    .sub-status-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    }
+    .sub-badge {
+      font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;
+      letter-spacing: 0.13em; font-size: 0.58rem;
+      padding: 4px 10px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+    }
+    .sub-badge.active { color: var(--good); border-color: rgba(231,244,222,0.3); background: rgba(231,244,222,0.05); }
+    .sub-badge.inactive { color: var(--bad); border-color: rgba(255,217,217,0.3); background: rgba(255,217,217,0.05); }
+    .sub-details {
+      display: grid; gap: 8px; margin-bottom: 16px;
+    }
+    .sub-detail-line {
+      display: flex; justify-content: space-between; gap: 16px;
+      padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.07);
+      font-size: 0.88rem;
+    }
+    .sub-detail-line:first-child { border-top: 0; padding-top: 0; }
+    .sub-detail-line span {
+      font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;
+      letter-spacing: 0.13em; font-size: 0.6rem; color: var(--muted);
+    }
+    .sub-detail-line strong { font-weight: 400; text-align: right; }
+    .sub-actions {
+      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
+    }
+    .sub-actions.single { grid-template-columns: 1fr; }
+    .sub-actions button, .sub-actions a {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 46px; padding: 0 16px; width: 100%;
+      border: 1px solid var(--line); background: rgba(255,255,255,0.03); color: var(--text);
+      cursor: pointer; text-decoration: none;
+      font-family: Arial, Helvetica, sans-serif; text-transform: uppercase;
+      letter-spacing: 0.13em; font-size: 0.6rem;
+      transition: background 180ms;
+    }
+    .sub-actions button:hover, .sub-actions a:hover { background: rgba(255,255,255,0.07); }
+    .sub-actions button:disabled { opacity: 0.55; cursor: wait; }
+    .sub-actions .btn-primary {
+      background: var(--text); color: #121212; border-color: transparent;
+    }
+    .sub-actions .btn-primary:hover { background: #ffffff; }
+
+    @media (max-width: 1080px) {
+      .layout,
+      .row,
+      .account-grid,
+      .dashboard-grid,
+      .auth-extra,
+      .info-fill { grid-template-columns: 1fr; }
+      .main-header { grid-template-columns: auto 1fr; }
+      .mini { display: none; }
+      .nav { justify-self: start; }
+    }
+    @media (max-width: 700px) {
+      .page { width: min(var(--max), calc(100vw - 24px)); }
+      .main-header {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .nav {
+        justify-self: start;
+        gap: 4px;
+      }
+      .nav a { padding: 8px 10px; }
+      .hero,
+      .card { padding: 18px; }
+      .hero { padding: 20px; }
+      .hero-access { margin-right: 0; padding: 18px; }
+      .points { padding-right: 0; }
+      h1 { font-size: clamp(2.6rem, 16vw, 4.5rem); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="main-header">
+      <a class="brand" href="../">
+        <img src="../Neon KittyClient Logo Design.png" alt="KittyClient logo" />
+        <div class="brand-copy">
+          <strong>KittyClient</strong>
+          <span>Account Portal</span>
+        </div>
+      </a>
+      <nav class="nav">
+        <a href="../">Home</a>
+        <a class="active" href="./">Account</a>
+        <a href="../Subscribe/">Subscribe</a>
+        <a href="../Support/">Support</a>
+      </nav>
+      <div class="mini">Identity / Access / Client Session</div>
+    </header>
+    <main class="layout">
+      <!-- PLAYER PREVIEW PANEL -->
+      <section class="player-panel">
+        <header class="section-header">
+          <span>01</span>
+          <span>Identity Preview</span>
+          <span style="margin-left:auto;opacity:0.38">Live entity model</span>
+        </header>
+        <div class="player-canvas-wrap">
+          <div class="p-corner tl"></div>
+          <div class="p-corner tr"></div>
+          <div class="p-corner bl"></div>
+          <div class="p-corner br"></div>
+          <div class="player-hint">Drag to orbit &nbsp;·&nbsp; Scroll to zoom</div>
+          <canvas id="playerCanvas" tabindex="0"></canvas>
+        </div>
+        <div class="player-readouts">
+          <div class="player-readout-line"><span>Session</span><strong id="dashboardSession">Inactive</strong></div>
+          <div class="player-readout-line"><span>Provider</span><strong id="dashboardProvider">—</strong></div>
+          <div class="player-readout-line"><span>Client Login</span><strong id="dashboardClientAccess">Waiting for sign-in</strong></div>
+          <div class="player-readout-line"><span>Last Login</span><strong id="dashboardLastLogin">Waiting for sign-in</strong></div>
+        </div>
+      </section>
+      <section class="card">
+        <header class="section-header">
+          <span>02</span>
+          <span>Authentication Console</span>
+        </header>
+        <div class="card-body">
+          <div>
+            <h2>Sign in or create account.</h2>
+            <p class="small">KittyClient is account-aware, session-aware, and built to make access feel clean, protected, and direct.</p>
+            <div id="status" class="status">Ready. Create an account or sign in.</div>
+            <div class="auth-shell">
+              <div id="authFormWrap" class="hidden-when-auth">
+                <form>
+                  <label>Email address<input id="email" type="email" placeholder="you@example.com" autocomplete="email" required /></label>
+                  <label>Password<input id="password" type="password" placeholder="Minimum 6 characters" autocomplete="current-password" required /></label>
+                  <div class="row">
+                    <button id="createBtn" class="btn-primary" type="button">Create Account</button>
+                    <button id="loginBtn" type="button">Sign In</button>
+                  </div>
+                  <button id="googleBtn" class="btn-google" type="button">Continue with Google</button>
+                  <button id="resendVerificationBtn" type="button" style="display:none">Resend Verification Email</button>
+                </form>
+              </div>
+              <section id="dashboard" class="dashboard">
+                <div class="dashboard-grid">
+
+                  <!-- Overview -->
+                  <article class="dashboard-panel">
+                    <span class="muted-tag">Overview</span>
+                    <h3>Account dashboard</h3>
+                    <p id="dashboardWelcome">Signed in and ready.</p>
+                    <section id="passwordSetup" class="password-setup">
+                      <div>
+                        <h3>Set your client password</h3>
+                        <p>Finish the account by creating the password your launcher and Minecraft client will use.</p>
+                      </div>
+                      <label>Client password<input id="googlePassword" type="password" placeholder="Minimum 6 characters" autocomplete="new-password" /></label>
+                      <label>Confirm client password<input id="googlePasswordConfirm" type="password" placeholder="Repeat password" autocomplete="new-password" /></label>
+                    </section>
+                    <div id="dashboardActions" class="dashboard-actions single">
+                      <button id="setGooglePasswordBtn" class="btn-primary is-hidden" type="button">Save Client Password</button>
+                      <button id="logoutBtn" type="button">Sign Out</button>
+                    </div>
+                  </article>
+
+                  <!-- Client Stats -->
+                  <article class="dashboard-panel">
+                    <span class="muted-tag">Client</span>
+                    <h3>Stats</h3>
+                    <div class="dashboard-list">
+                      <div class="dashboard-line"><span>Status</span><strong id="statStatus">—</strong></div>
+                      <div class="dashboard-line"><span>Client Version</span><strong id="statVersion">—</strong></div>
+                      <div class="dashboard-line"><span>Login Count</span><strong id="statLogins">—</strong></div>
+                      <div class="dashboard-line"><span>Last Login</span><strong id="statLastLogin">—</strong></div>
+                      <div class="dashboard-line"><span>Member Since</span><strong id="statCreated">—</strong></div>
+                    </div>
+                  </article>
+
+                  <!-- Subscription -->
+                  <article id="subPanel" class="dashboard-panel sub-panel">
+                    <span class="muted-tag">Subscription</span>
+                    <h3>KittyClient Premium</h3>
+                    <div class="sub-status-row">
+                      <span id="subBadge" class="sub-badge">Loading...</span>
+                    </div>
+                    <div class="sub-details">
+                      <div class="sub-detail-line"><span>Plan</span><strong>$15 / month</strong></div>
+                      <div class="sub-detail-line"><span>Status</span><strong id="subStatusText">—</strong></div>
+                      <div class="sub-detail-line"><span>Next billing</span><strong id="subRenewal">—</strong></div>
+                    </div>
+                    <div id="subActions" class="sub-actions single">
+                      <a class="btn-primary" href="../Subscribe/">Subscribe — $15 / month</a>
+                    </div>
+                  </article>
+
+                  <!-- Friends -->
+                  <article class="dashboard-panel friends-panel">
+                    <span class="muted-tag">Social</span>
+                    <h3>Friends</h3>
+                    <div id="friendsList" class="friends-list">
+                      <p class="friends-empty">No friends added yet.</p>
+                    </div>
+                  </article>
+
+                </div>
+              </section>
+            </div>
+          </div>
+          <div class="info-fill">
+            <section id="accountCard" class="info-fill-panel account">
+              <div class="account-head">
+                <div>
+                  <h3>Profile details</h3>
+                  <p class="small">Core account identity and provider information.</p>
+                </div>
+              </div>
+              <div class="account-grid">
+                <div class="account-item"><span class="field-tag">Name</span><strong id="accountName">-</strong></div>
+                <div class="account-item"><span class="field-tag">Email</span><strong id="accountEmail">-</strong></div>
+                <div class="account-item"><span class="field-tag">Minecraft UUID</span><strong id="accountMcUuid">-</strong></div>
+                <div class="account-item"><span class="field-tag">Provider</span><strong id="accountProvider">-</strong></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <!-- Three.js importmap -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <!-- 3D player viewer -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { OBJLoader }     from 'three/addons/loaders/OBJLoader.js';
+    import { MTLLoader }     from 'three/addons/loaders/MTLLoader.js';
+
+    const canvas = document.getElementById('playerCanvas');
+
+    /* ── SCENE ── */
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.FogExp2(0x000000, 0.038);
+
+    /* ── CAMERA ── */
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 300);
+    camera.position.set(0, 2, 20);
+
+    /* ── RENDERER ── */
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.NoToneMapping;
+
+    function resize() {
+      const w = canvas.clientWidth || canvas.offsetWidth || 400;
+      const h = canvas.clientHeight || canvas.offsetHeight || 420;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(canvas);
+    requestAnimationFrame(() => requestAnimationFrame(resize));
+
+    /* ── CONTROLS ── */
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping   = true;
+    controls.dampingFactor   = 0.055;
+    controls.minDistance     = 4;
+    controls.maxDistance     = 35;
+    controls.maxPolarAngle   = Math.PI * 0.56;
+    controls.autoRotate      = true;
+    controls.autoRotateSpeed = 0.4;
+    controls.target.set(0, 2, 0);
+    controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+    /* ── LIGHTS ── */
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+    const keyLight = new THREE.PointLight(0xffffff, 3, 30);
+    keyLight.position.set(3, 7, 8);
+    scene.add(keyLight);
+    const fillLight = new THREE.PointLight(0xfff0f8, 1.5, 22);
+    fillLight.position.set(-8, 1, -3);
+    scene.add(fillLight);
+    const rimLight = new THREE.PointLight(0xffffff, 1.2, 20);
+    rimLight.position.set(5, -3, -10);
+    scene.add(rimLight);
+    const topLight = new THREE.PointLight(0xfff0f8, 1.0, 18);
+    topLight.position.set(0, 10, 0);
+    scene.add(topLight);
+
+    /* ── ROOM + GRID ── */
+    const roomGeo = new THREE.BoxGeometry(80, 50, 80);
+    const roomMat = new THREE.MeshLambertMaterial({ color: 0x000000, side: THREE.BackSide });
+    scene.add(new THREE.Mesh(roomGeo, roomMat));
+    const gridFloor = new THREE.GridHelper(80, 80, 0xffffff, 0x444444);
+    gridFloor.position.y = -5;
+    scene.add(gridFloor);
+
+    /* ── GRID TEXTURE (default skin when not logged in) ── */
+    function makeGridTexture() {
+      const size = 256;
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      const step = 16;
+      for (let x = 0; x <= size; x += step) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
+      }
+      for (let y = 0; y <= size; y += step) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      return t;
+    }
+
+    /* ── MATERIALS ── */
+    const skinMat = new THREE.MeshPhongMaterial({
+      map:   makeGridTexture(),
+      color: 0xffffff,
+      side:  THREE.DoubleSide,
+    });
+    const linesMat = new THREE.MeshPhongMaterial({
+      color:             0xffffff,
+      emissive:          0xffffff,
+      emissiveIntensity: 0.6,
+      side:              THREE.DoubleSide,
+    });
+
+    /* ── LOAD PLAYER OBJ ── */
+    const activeSkinMats = [];
+    let pendingSkinUUID = undefined; // undefined = not yet received
+
+    function swapSkinTexture(mcUUID) {
+      pendingSkinUUID = mcUUID;
+      if (activeSkinMats.length === 0) return;
+
+      if (!mcUUID) {
+        const gt = makeGridTexture();
+        activeSkinMats.forEach(m => { m.map = gt; m.needsUpdate = true; });
+        return;
+      }
+
+      const url = `https://mc-heads.net/skin/${mcUUID}`;
+      const texLoader = new THREE.TextureLoader();
+      texLoader.load(
+        url,
+        t => {
+          t.magFilter = THREE.NearestFilter;
+          t.minFilter = THREE.NearestFilter;
+          activeSkinMats.forEach(m => { m.map = t; m.needsUpdate = true; });
+        },
+        undefined,
+        () => {
+          const gt = makeGridTexture();
+          activeSkinMats.forEach(m => { m.map = gt; m.needsUpdate = true; });
+        }
+      );
+    }
+
+    window.addEventListener('kc:skinupdate', e => swapSkinTexture(e.detail.mcUUID));
+
+    const BASE = '../Assets/ui3d/';
+    const mtl = new MTLLoader();
+    mtl.setPath(BASE);
+    mtl.load('3D_UI_ELEMENT_PLAYER.mtl', mats => {
+      mats.preload();
+      const obj = new OBJLoader();
+      obj.setMaterials(mats);
+      obj.setPath(BASE);
+      obj.load('3D_UI_ELEMENT_PLAYER.obj', model => {
+        model.traverse(child => {
+          if (!child.isMesh) return;
+          const raw = Array.isArray(child.material) ? child.material[0] : child.material;
+          const name = (raw?.name || '').toLowerCase();
+          if (name.includes('alpha')) {
+            const m = skinMat.clone();
+            m.transparent = true;
+            m.alphaTest   = 0.1;
+            activeSkinMats.push(m);
+            child.material = m;
+          } else {
+            const m = skinMat.clone();
+            activeSkinMats.push(m);
+            child.material = m;
+          }
+        });
+
+        // Apply any skin that arrived before the model finished loading
+        if (pendingSkinUUID !== undefined) swapSkinTexture(pendingSkinUUID);
+
+        // Scale model to a fixed height of 9 scene units
+        const box1 = new THREE.Box3().setFromObject(model);
+        const size = new THREE.Vector3();
+        box1.getSize(size);
+        const scale = 9 / Math.max(size.x, size.y, size.z);
+        model.scale.setScalar(scale);
+
+        // Centre model at origin
+        const box2 = new THREE.Box3().setFromObject(model);
+        const centre = new THREE.Vector3();
+        box2.getCenter(centre);
+        model.position.sub(centre);
+
+        scene.add(model);
+        controls.target.set(0, 0, 0);
+        controls.update();
+      });
+    });
+
+    /* ── RENDER LOOP ── */
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { EmailAuthProvider, getAuth, GoogleAuthProvider, browserLocalPersistence, createUserWithEmailAndPassword, linkWithCredential, onAuthStateChanged, sendEmailVerification, setPersistence, signInWithEmailAndPassword, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    const firebaseConfig = { apiKey: "AIzaSyA4_Mylnnsp0XDuf4awoJS-ro5WL-UfsZg", authDomain: "kittyclientauth.firebaseapp.com", projectId: "kittyclientauth", storageBucket: "kittyclientauth.firebasestorage.app", messagingSenderId: "950050113829", appId: "1:950050113829:web:317da48c762964e37032cc" };
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    function fmt(ts) {
+      if (!ts) return "—";
+      return new Date(ts.seconds * 1000).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    }
+    function clearDashboard() {
+      ["statStatus","statVersion","statLogins","statLastLogin","statCreated","accountMcUuid"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = "—";
+      });
+      const fl = document.getElementById("friendsList");
+      if (fl) fl.innerHTML = '<p class="friends-empty">No friends added yet.</p>';
+    }
+    async function applySkin(user) {
+      let mcUUID = null;
+      if (user) {
+        // publicUsers — in-game name + mcUUID
+        try {
+          const pubSnap = await getDoc(doc(db, "publicUsers", user.uid));
+          if (pubSnap.exists()) {
+            mcUUID = pubSnap.data().mcUUID || null;
+            const igName = pubSnap.data().displayName || null;
+            const nameEl = document.getElementById("accountName");
+            if (nameEl && igName) nameEl.textContent = igName;
+            const uuidEl = document.getElementById("accountMcUuid");
+            if (uuidEl && mcUUID) uuidEl.textContent = mcUUID;
+          }
+        } catch (_) {}
+
+        // users — client stats
+        try {
+          const userSnap = await getDoc(doc(db, "users", user.uid));
+          if (userSnap.exists()) {
+            const d = userSnap.data();
+            const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val ?? "—"; };
+            set("statStatus",    d.status ? d.status.charAt(0).toUpperCase() + d.status.slice(1) : "—");
+            set("statVersion",   d.clientVersion || "—");
+            set("statLogins",    d.loginCount ?? "—");
+            set("statLastLogin", fmt(d.lastLogin));
+            set("statCreated",   fmt(d.createdAt));
+          }
+        } catch (_) {}
+
+        // presence — own session state
+        try {
+          const presSnap = await getDoc(doc(db, "users", user.uid, "presence", "status"));
+          const sessionEl = document.getElementById("dashboardSession");
+          if (sessionEl) {
+            const state = presSnap.exists() ? (presSnap.data().state || "offline") : "offline";
+            sessionEl.textContent = state === "online" ? "Online" : "Offline";
+            sessionEl.dataset.state = state;
+          }
+        } catch (e) { console.error("[session] presence read failed", e); }
+
+        // friends subcollection
+        try {
+          const friendsSnap = await getDocs(collection(db, "users", user.uid, "friends"));
+          const fl = document.getElementById("friendsList");
+          if (fl) {
+            if (friendsSnap.empty) {
+              fl.innerHTML = '<p class="friends-empty">No friends added yet.</p>';
+            } else {
+              fl.innerHTML = "";
+              for (const fdoc of friendsSnap.docs) {
+                const f = fdoc.data();
+                const name = f.displayName || fdoc.id;
+                const friendUid = f.uid || fdoc.id;
+
+                let onlineState = "offline";
+                try {
+                  const presSnap = await getDoc(doc(db, "users", friendUid, "presence", "status"));
+                  if (presSnap.exists()) onlineState = presSnap.data().state || "offline";
+                  else console.warn("[friends] presence doc missing for", friendUid);
+                } catch (e) { console.error("[friends] presence read failed for", friendUid, e); }
+
+                const row = document.createElement("div");
+                row.className = "friend-row";
+
+                const left = document.createElement("div");
+                left.className = "friend-left";
+
+                const avatar = document.createElement("img");
+                avatar.className = "friend-avatar";
+                avatar.src = "https://mc-heads.net/avatar/" + encodeURIComponent(name) + "/32";
+                avatar.alt = name;
+                avatar.loading = "lazy";
+
+                const info = document.createElement("div");
+                info.className = "friend-info";
+
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "friend-name";
+                nameSpan.textContent = name;
+
+                const sinceSpan = document.createElement("span");
+                sinceSpan.className = "friend-since";
+                sinceSpan.textContent = fmt(f.addedAt);
+
+                info.appendChild(nameSpan);
+                info.appendChild(sinceSpan);
+                left.appendChild(avatar);
+                left.appendChild(info);
+
+                const statusBadge = document.createElement("span");
+                statusBadge.className = "friend-status";
+                statusBadge.dataset.state = onlineState;
+                statusBadge.textContent = onlineState === "online" ? "Online" : "Offline";
+
+                row.appendChild(left);
+                row.appendChild(statusBadge);
+                fl.appendChild(row);
+              }
+            }
+          }
+        } catch (_) {}
+      } else {
+        clearDashboard();
+      }
+      window.dispatchEvent(new CustomEvent("kc:skinupdate", { detail: { mcUUID } }));
+    }
+    const googleProvider = new GoogleAuthProvider();
+    googleProvider.setCustomParameters({ prompt: "select_account" });
+    const statusBox = document.getElementById("status");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const createBtn = document.getElementById("createBtn");
+    const loginBtn = document.getElementById("loginBtn");
+    const googleBtn = document.getElementById("googleBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const authFormWrap = document.getElementById("authFormWrap");
+    const dashboard = document.getElementById("dashboard");
+    const accountCard = document.getElementById("accountCard");
+    const accountName = document.getElementById("accountName");
+    const accountEmail = document.getElementById("accountEmail");
+    const accountProvider = document.getElementById("accountProvider");
+    const dashboardWelcome = document.getElementById("dashboardWelcome");
+    const dashboardProvider = document.getElementById("dashboardProvider");
+    const dashboardSession = document.getElementById("dashboardSession");
+    const dashboardClientAccess = document.getElementById("dashboardClientAccess");
+    const dashboardLastLogin = document.getElementById("dashboardLastLogin");
+    const dashboardActions = document.getElementById("dashboardActions");
+    const passwordSetup = document.getElementById("passwordSetup");
+    const googlePasswordInput = document.getElementById("googlePassword");
+    const googlePasswordConfirmInput = document.getElementById("googlePasswordConfirm");
+    const setGooglePasswordBtn = document.getElementById("setGooglePasswordBtn");
+    const resendVerificationBtn = document.getElementById("resendVerificationBtn");
+    function setStatus(message, type = "") { statusBox.textContent = message; statusBox.className = type ? `status ${type}` : "status"; }
+    function setBusy(busy) { [createBtn, loginBtn, googleBtn, logoutBtn, setGooglePasswordBtn, resendVerificationBtn].forEach((button) => { button.disabled = busy; }); }
+    function providerName(providerId) { if (providerId === "google.com") return "Google"; if (providerId === "password") return "Email / Password"; return providerId; }
+    function hasPasswordProvider(user) { return Boolean(user && user.providerData.some((provider) => provider.providerId === "password")); }
+    function needsEmailVerification(user) { return Boolean(user && hasPasswordProvider(user) && !user.emailVerified); }
+    function needsClientPassword(user) { return Boolean(user && user.email && !hasPasswordProvider(user)); }
+    function getProviderLabel(user) { if (!user || !user.providerData.length) return "unknown"; return [...new Set(user.providerData.map((provider) => providerName(provider.providerId)))].join(" + "); }
+    function renderUser(user) {
+      if (!user) {
+        authFormWrap.classList.remove("is-hidden");
+        dashboard.classList.remove("active");
+        accountCard.classList.remove("active");
+        passwordSetup.classList.remove("active");
+        dashboardActions.classList.add("single");
+        setGooglePasswordBtn.classList.add("is-hidden");
+        resendVerificationBtn.style.display = "none";
+        googlePasswordInput.value = "";
+        googlePasswordConfirmInput.value = "";
+        accountName.textContent = "-";
+        accountEmail.textContent = "-";
+        accountProvider.textContent = "-";
+        dashboardWelcome.textContent = "Signed in and ready to manage your KittyClient account.";
+        dashboardProvider.textContent = "—";
+        dashboardSession.textContent = "Offline";
+        dashboardSession.dataset.state = "";
+        dashboardClientAccess.textContent = "Waiting for sign-in";
+        dashboardLastLogin.textContent = "Waiting for sign-in";
+        return;
+      }
+      const requiresClientPassword = needsClientPassword(user);
+      authFormWrap.classList.add("is-hidden");
+      dashboard.classList.add("active");
+      accountCard.classList.add("active");
+      resendVerificationBtn.style.display = "none";
+      passwordSetup.classList.toggle("active", requiresClientPassword);
+      dashboardActions.classList.toggle("single", !requiresClientPassword);
+      setGooglePasswordBtn.classList.toggle("is-hidden", !requiresClientPassword);
+      accountName.textContent = "-";
+      accountEmail.textContent = user.email || "No email";
+      accountProvider.textContent = getProviderLabel(user);
+      dashboardWelcome.textContent = requiresClientPassword
+        ? "Signed in, but still needs a client password."
+        : "Signed in and ready.";
+      dashboardProvider.textContent = getProviderLabel(user);
+      /* presence state set inside applySkin once fetched */
+      dashboardClientAccess.textContent = requiresClientPassword ? "Needs password" : "Ready";
+      dashboardLastLogin.textContent = user.metadata.lastSignInTime ? new Date(user.metadata.lastSignInTime).toLocaleString() : "Current session";
+    }
+    function friendlyError(error) { const code = error && error.code ? error.code : ""; const map = { "auth/email-already-in-use": "That email is already registered. Try signing in instead.", "auth/invalid-email": "The email address format is invalid.", "auth/missing-password": "Enter a password first.", "auth/weak-password": "Password must be at least 6 characters long.", "auth/user-not-found": "No account exists for that email yet.", "auth/wrong-password": "Incorrect password.", "auth/invalid-credential": "The email or password is incorrect.", "auth/provider-already-linked": "A client password is already linked to this account.", "auth/popup-closed-by-user": "Google sign-in was cancelled before completion.", "auth/unauthorized-domain": "This domain is not authorized in Firebase Authentication settings.", "auth/operation-not-allowed": "This sign-in method is disabled in Firebase Authentication settings." }; return map[code] || error.message || "Authentication failed."; }
+    async function createAccount() { const email = emailInput.value.trim(); const password = passwordInput.value; if (!email || !password) { setStatus("Enter an email and password before creating an account.", "error"); return; } setBusy(true); setStatus("Creating account..."); try { const credential = await createUserWithEmailAndPassword(auth, email, password); await sendEmailVerification(credential.user); await signOut(auth); setStatus("Account created. Verify your email before signing in.", "success"); resendVerificationBtn.style.display = ""; } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
+    async function loginWithEmail() { const email = emailInput.value.trim(); const password = passwordInput.value; if (!email || !password) { setStatus("Enter your email and password to sign in.", "error"); return; } setBusy(true); setStatus("Signing in..."); try { const credential = await signInWithEmailAndPassword(auth, email, password); await credential.user.reload(); if (!credential.user.emailVerified) { await signOut(auth); setStatus("Verify your email before signing in. Use the verification link we sent to your inbox.", "error"); return; } setStatus("Signed in successfully.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
+    async function loginWithGoogle() { setBusy(true); setStatus("Opening Google sign-in..."); try { const credential = await signInWithPopup(auth, googleProvider); if (needsClientPassword(credential.user)) setStatus("Google sign-in finished. Set a client password below before using this account in Minecraft.", "error"); else setStatus("Google account connected and signed in.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
+    async function resendVerification() {
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      if (!email || !password) { setStatus("Enter your email and password to resend the verification link.", "error"); return; }
+      setBusy(true);
+      setStatus("Sending verification email...");
+      try {
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        await credential.user.reload();
+        if (credential.user.emailVerified) {
+          setStatus("This email is already verified. You can sign in now.", "success");
+        } else {
+          await sendEmailVerification(credential.user);
+          setStatus("Verification email sent. Check your inbox, then sign in after verifying.", "success");
+        }
+        await signOut(auth);
+      } catch (error) {
+        setStatus(friendlyError(error), "error");
+      } finally {
+        setBusy(false);
+      }
+    }
+    async function setGooglePassword() {
+      const user = auth.currentUser;
+      const password = googlePasswordInput.value;
+      const confirmPassword = googlePasswordConfirmInput.value;
+      if (!user) { setStatus("Sign in first before setting a client password.", "error"); return; }
+      if (!user.email) { setStatus("This Google account does not expose an email address, so a client password cannot be linked.", "error"); return; }
+      if (hasPasswordProvider(user)) { setStatus("This account already has a client password linked.", "success"); return; }
+      if (!password) { setStatus("Enter a client password first.", "error"); return; }
+      if (password.length < 6) { setStatus("Password must be at least 6 characters long.", "error"); return; }
+      if (password !== confirmPassword) { setStatus("The password confirmation does not match.", "error"); return; }
+      setBusy(true);
+      setStatus("Saving client password...");
+      try {
+        const credential = EmailAuthProvider.credential(user.email, password);
+        await linkWithCredential(user, credential);
+        await user.reload();
+        googlePasswordInput.value = "";
+        googlePasswordConfirmInput.value = "";
+        renderUser(auth.currentUser);
+        setStatus("Client password saved. You can now sign in with this email and password inside Minecraft.", "success");
+      } catch (error) {
+        setStatus(friendlyError(error), "error");
+      } finally {
+        setBusy(false);
+      }
+    }
+    async function logout() { setBusy(true); setStatus("Signing out..."); try { await signOut(auth); setStatus("Signed out successfully.", "success"); } catch (error) { setStatus(friendlyError(error), "error"); } finally { setBusy(false); } }
+    await setPersistence(auth, browserLocalPersistence);
+    createBtn.addEventListener("click", createAccount); loginBtn.addEventListener("click", loginWithEmail); googleBtn.addEventListener("click", loginWithGoogle); setGooglePasswordBtn.addEventListener("click", setGooglePassword); resendVerificationBtn.addEventListener("click", resendVerification); logoutBtn.addEventListener("click", logout);
+    const CF_BASE = "https://us-central1-kittyclientauth.cloudfunctions.net";
+
+    async function loadSubscription(user) {
+      const badge       = document.getElementById("subBadge");
+      const statusText  = document.getElementById("subStatusText");
+      const renewal     = document.getElementById("subRenewal");
+      const actionsEl   = document.getElementById("subActions");
+      if (!badge) return;
+
+      if (!user) {
+        badge.className      = "sub-badge inactive";
+        badge.textContent    = "No subscription";
+        statusText.textContent = "—";
+        renewal.textContent  = "—";
+        actionsEl.innerHTML  = `<a class="btn-primary" href="../Subscribe/">Subscribe — $15 / month</a>`;
+        actionsEl.className  = "sub-actions single";
+        return;
+      }
+
+      badge.className   = "sub-badge";
+      badge.textContent = "Loading...";
+
+      try {
+        const subSnap = await getDoc(doc(db, "subscriptions", user.uid));
+        if (subSnap.exists()) {
+          const d      = subSnap.data();
+          const active = ["active", "trialing"].includes(d.status);
+          const end    = d.currentPeriodEnd?.toDate?.() || null;
+          const endStr = end ? end.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "—";
+
+          badge.className      = active ? "sub-badge active" : "sub-badge inactive";
+          badge.textContent    = active ? "Active" : (d.status || "Inactive");
+          statusText.textContent = d.status ? (d.status.charAt(0).toUpperCase() + d.status.slice(1)) : "—";
+          renewal.textContent  = active ? endStr : "—";
+
+          if (active) {
+            actionsEl.className = "sub-actions";
+            actionsEl.innerHTML = `
+              <button id="dlBtn" type="button">Download Client</button>
+              <button id="portalBtn" type="button">Manage Billing</button>
+            `;
+            document.getElementById("dlBtn").addEventListener("click", async () => {
+              const btn = document.getElementById("dlBtn");
+              btn.disabled = true; btn.textContent = "Preparing...";
+              try {
+                const idToken = await user.getIdToken();
+                const resp    = await fetch(`${CF_BASE}/getLoaderJar`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+                  body: "{}"
+                });
+                const data = await resp.json();
+                if (data.url) {
+                  const a = document.createElement("a");
+                  a.href = data.url; a.download = data.filename || "KittyClient-loader.jar";
+                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                }
+              } catch (_) {}
+              btn.disabled = false; btn.textContent = "Download Client";
+            });
+            document.getElementById("portalBtn").addEventListener("click", async () => {
+              const btn = document.getElementById("portalBtn");
+              btn.disabled = true; btn.textContent = "Opening...";
+              try {
+                const idToken = await user.getIdToken();
+                const resp    = await fetch(`${CF_BASE}/createPortalSession`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", "Authorization": `Bearer ${idToken}` },
+                  body: "{}"
+                });
+                const data = await resp.json();
+                if (data.url) window.location.href = data.url;
+              } catch (_) {}
+              btn.disabled = false; btn.textContent = "Manage Billing";
+            });
+          } else {
+            actionsEl.className = "sub-actions single";
+            actionsEl.innerHTML = `<a class="btn-primary" href="../Subscribe/">Subscribe — $15 / month</a>`;
+          }
+          return;
+        }
+      } catch (_) {}
+
+      // No subscription doc
+      badge.className      = "sub-badge inactive";
+      badge.textContent    = "No subscription";
+      statusText.textContent = "Inactive";
+      renewal.textContent  = "—";
+      actionsEl.className  = "sub-actions single";
+      actionsEl.innerHTML  = `<a class="btn-primary" href="../Subscribe/">Subscribe — $15 / month</a>`;
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await user.reload();
+        if (needsEmailVerification(user)) {
+          renderUser(user);
+          setStatus("Verify your email before signing in. Use the resend button if needed.", "error");
+          await signOut(auth);
+          return;
+        }
+      }
+      renderUser(auth.currentUser);
+      applySkin(auth.currentUser);
+      loadSubscription(auth.currentUser);
+      if (auth.currentUser) {
+        if (needsClientPassword(auth.currentUser)) setStatus("This Google account still needs a client password before it can be used in Minecraft.", "error");
+        else setStatus(`Logged in as ${auth.currentUser.email || auth.currentUser.uid}.`, "success");
+      } else setStatus("Ready. Create an account or sign in.");
+    });
+
+    const transitionLinks = document.querySelectorAll('a[href]');
+    window.addEventListener("pageshow", () => {
+      document.body.classList.add("is-ready");
+      document.body.classList.remove("is-leaving");
+    });
+    requestAnimationFrame(() => {
+      document.body.classList.add("is-ready");
+    });
+    transitionLinks.forEach((link) => {
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("mailto:") || link.target === "_blank") return;
+      link.addEventListener("click", (event) => {
+        const url = new URL(link.href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        event.preventDefault();
+        document.body.classList.add("is-leaving");
+        window.setTimeout(() => {
+          window.location.href = link.href;
+        }, 260);
+      });
+    });
+  </script>
+</body>
+</html>

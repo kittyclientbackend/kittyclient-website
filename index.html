@@ -1,0 +1,1429 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KittyClient | Build Faster. Play Cleaner.</title>
+  <meta name="description" content="KittyClient — a Minecraft client built around personality, tools, and a strong visual identity." />
+  <style>
+    /* ── ROOT ── */
+    :root {
+      --bg: #111111;
+      --panel: #151515;
+      --line: rgba(255,255,255,0.16);
+      --line-strong: rgba(255,255,255,0.34);
+      --text: #f4f1e8;
+      --muted: rgba(244,241,232,0.68);
+      --max: 1260px;
+      --shadow: 0 24px 80px rgba(0,0,0,0.45);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255,255,255,0.05), transparent 30%),
+        radial-gradient(circle at 100% 20%, rgba(255,255,255,0.04), transparent 28%),
+        linear-gradient(180deg, #0e0e0e 0%, var(--bg) 100%);
+      min-height: 100vh;
+    }
+
+    /* subtle grid overlay */
+    body::before {
+      content: "";
+      position: fixed; inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.8), rgba(0,0,0,0.22));
+      z-index: 0;
+    }
+
+    a { color: inherit; }
+    img { display: block; max-width: 100%; }
+    button, input { font: inherit; }
+    h1, h2, h3 { font-weight: 400; }
+
+    /* ── LAYOUT ── */
+    .page {
+      width: min(var(--max), calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 18px 0 64px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── HEADER ── */
+    .main-header {
+      position: sticky;
+      top: 16px;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      background: rgba(17,17,17,0.88);
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      transform: scaleX(0.985) scaleY(0.992) translateY(-6px);
+      transform-origin: top center;
+      transition: opacity 300ms ease, transform 620ms cubic-bezier(0.22,1,0.36,1);
+    }
+    body.is-ready .main-header  { opacity: 1; transform: scaleX(1) scaleY(1) translateY(0); }
+    body.is-leaving .main-header { opacity: 0.96; transform: scaleX(0.992) scaleY(0.996) translateY(-3px); }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateX(-18px);
+      transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22,1,0.36,1);
+    }
+    body.is-ready .brand { opacity: 1; transform: translateX(0); }
+    .brand img {
+      width: 48px; height: 48px;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      padding: 4px;
+    }
+    .brand-copy { display: grid; gap: 2px; }
+    .brand-copy strong {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+    .brand-copy span {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+
+    .nav {
+      justify-self: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22,1,0.36,1);
+    }
+    body.is-ready .nav { opacity: 1; transform: translateY(0); }
+    .nav a {
+      position: relative;
+      padding: 10px 12px;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.66rem;
+      text-decoration: none;
+      color: var(--muted);
+      border: 1px solid transparent;
+      transition: color 220ms ease, border-color 220ms ease, background 220ms ease;
+    }
+    .nav a:hover, .nav a.active {
+      color: var(--text);
+      border-color: var(--line);
+      background: rgba(255,255,255,0.04);
+    }
+    .mini {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.58rem;
+      color: var(--muted);
+      justify-self: end;
+    }
+
+    /* ── PAGE TRANSITIONS ── */
+    main, footer {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity 360ms ease, transform 360ms ease;
+    }
+    body.is-ready main,
+    body.is-ready footer { opacity: 1; transform: translateY(0); }
+    body.is-leaving main,
+    body.is-leaving footer { opacity: 0; transform: translateY(10px); }
+
+    /* ── HERO ── */
+    .hero {
+      padding: 88px 0 64px;
+      border-bottom: 1px solid var(--line);
+    }
+    .eyebrow {
+      display: block;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-size: 0.64rem;
+      color: var(--muted);
+      margin-bottom: 22px;
+    }
+    h1 {
+      font-size: clamp(3.2rem, 7.5vw, 6.8rem);
+      line-height: 0.9;
+      letter-spacing: -0.058em;
+      max-width: 13ch;
+      margin-bottom: 26px;
+    }
+    #demoPanelDesc.is-typing::after {
+      content: "";
+      display: inline-block;
+      width: 1px; height: 0.8em;
+      margin-left: 0.05em;
+      background: currentColor;
+      vertical-align: 0.04em;
+      animation: caret 0.85s steps(1) infinite;
+    }
+    #heroTitle.is-typing::after {
+      content: "";
+      display: inline-block;
+      width: 2px; height: 0.82em;
+      margin-left: 0.06em;
+      background: currentColor;
+      vertical-align: 0.04em;
+      animation: caret 0.85s steps(1) infinite;
+    }
+    @keyframes caret { 0%,48%{opacity:1} 50%,100%{opacity:0} }
+
+    .hero-lead {
+      font-size: 1.06rem;
+      line-height: 1.78;
+      color: var(--muted);
+      max-width: 48ch;
+      margin-bottom: 38px;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 28px;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+    .stat { display: flex; align-items: baseline; gap: 8px; }
+    .stat-num { font-size: 2.1rem; line-height: 1; }
+    .stat-label {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.6rem;
+      color: var(--muted);
+    }
+
+    /* ── SECTIONS ── */
+    .section { padding: 54px 0 0; }
+
+    .section-header {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      padding-bottom: 11px;
+      border-bottom: 1px solid var(--line);
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-size: 0.62rem;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .section-body {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.016), rgba(255,255,255,0.006));
+      box-shadow: var(--shadow);
+      padding: 28px 100px 28px 28px;
+      position: relative;
+    }
+    .section-body.no-pad-right { padding-right: 28px; }
+
+    .section-corner {
+      position: absolute;
+      top: 20px; right: 20px;
+      width: 58px; height: 58px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,0.07);
+    }
+    .section-corner svg {
+      width: 66%; height: auto;
+      stroke: rgba(255,255,255,0.6);
+      fill: none;
+      stroke-width: 1.5;
+    }
+
+    h2 {
+      font-size: clamp(1.7rem, 3vw, 2.8rem);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      max-width: 15ch;
+      margin-bottom: 14px;
+    }
+    .intro {
+      font-size: 1.04rem;
+      line-height: 1.74;
+      color: var(--muted);
+      max-width: 54ch;
+    }
+
+    /* ── 3D DEMO ── */
+    .demo-wrap {
+      position: relative;
+      border: 1px solid var(--line);
+      overflow: hidden;
+      background: #030609;
+    }
+    .p-corner {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      z-index: 5;
+      pointer-events: none;
+    }
+    .p-corner::before,
+    .p-corner::after {
+      content: "";
+      position: absolute;
+      background: rgba(255,255,255,0.55);
+    }
+    .p-corner::before { width: 2px; height: 100%; }
+    .p-corner::after  { width: 100%; height: 2px; }
+    .p-corner.tl { top: 14px; left: 14px; }
+    .p-corner.tl::before { top: 0; left: 0; }
+    .p-corner.tl::after  { top: 0; left: 0; }
+    .p-corner.tr { top: 14px; right: 14px; }
+    .p-corner.tr::before { top: 0; right: 0; left: auto; }
+    .p-corner.tr::after  { top: 0; right: 0; left: auto; }
+    .p-corner.bl { bottom: 14px; left: 14px; }
+    .p-corner.bl::before { bottom: 0; top: auto; left: 0; }
+    .p-corner.bl::after  { bottom: 0; top: auto; left: 0; }
+    .p-corner.br { bottom: 14px; right: 14px; }
+    .p-corner.br::before { bottom: 0; top: auto; right: 0; left: auto; }
+    .p-corner.br::after  { bottom: 0; top: auto; right: 0; left: auto; }
+
+    #demoCanvas {
+      display: block;
+      width: 100%;
+      height: clamp(420px, 68vh, 700px);
+      cursor: grab;
+      outline: none;
+    }
+    #demoCanvas:active { cursor: grabbing; }
+
+    .demo-hint {
+      position: absolute;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 0.56rem;
+      color: var(--muted);
+      pointer-events: none;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    /* Loading overlay */
+    #demoLoading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      background: #000000;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+      color: var(--muted);
+      transition: opacity 480ms ease;
+      z-index: 5;
+    }
+    #demoLoading.fade-out { opacity: 0; pointer-events: none; }
+
+    .load-bar {
+      width: 180px; height: 1px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+      position: relative;
+    }
+    .load-bar::after {
+      content: "";
+      position: absolute;
+      top: 0; left: -100%; width: 100%; height: 100%;
+      background: rgba(255,255,255,0.6);
+      animation: sweep 1.6s ease infinite;
+    }
+    @keyframes sweep { to { left: 100%; } }
+
+    /* Info panel */
+    .demo-panel {
+      position: absolute;
+      bottom: 20px; left: 20px;
+      width: min(340px, calc(100% - 40px));
+      background: rgba(12,12,14,0.32);
+      border: 1px solid rgba(255,255,255,0.18);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      padding: 18px 18px 20px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 220ms ease, transform 220ms ease;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .demo-panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .demo-panel-close {
+      position: absolute;
+      top: 10px; right: 10px;
+      background: none;
+      border: 1px solid var(--line);
+      color: var(--muted);
+      width: 22px; height: 22px;
+      cursor: pointer;
+      font-size: 13px;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 160ms;
+    }
+    .demo-panel-close:hover { background: rgba(255,255,255,0.07); }
+    .demo-panel-label {
+      display: block;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.56rem;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .demo-panel h3 {
+      font-size: 1.45rem;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+    .demo-panel p {
+      font-size: 0.9rem;
+      line-height: 1.72;
+      color: var(--muted);
+    }
+
+    /* hover tooltip */
+    #demoTooltip {
+      position: absolute;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.56rem;
+      color: var(--text);
+      background: rgba(0,0,0,0.88);
+      border: 1px solid var(--line-strong);
+      padding: 4px 8px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 120ms;
+      z-index: 8;
+      white-space: nowrap;
+    }
+    #demoTooltip.show { opacity: 1; }
+
+    /* ── MODULES ── */
+    .module-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+    .input {
+      flex: 1 1 230px;
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.018);
+      color: var(--text);
+      outline: none;
+    }
+    .input:focus { border-color: var(--line-strong); }
+    .chip {
+      min-height: 42px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.018);
+      color: var(--muted);
+      cursor: pointer;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 0.6rem;
+      transition: 160ms ease;
+    }
+    .chip:hover, .chip.active {
+      background: rgba(255,255,255,0.065);
+      border-color: var(--line-strong);
+      color: var(--text);
+    }
+
+    .module-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 11px;
+      transition: opacity 150ms, transform 150ms;
+    }
+    .module-grid.is-updating { opacity: 0.25; transform: translateY(5px); }
+
+    .module-card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.015);
+      padding: 15px;
+      display: grid;
+      gap: 7px;
+      align-content: start;
+      opacity: 0;
+      transform: translateY(8px);
+      animation: cardIn 200ms ease forwards;
+    }
+    .module-card h3 { font-size: 1rem; line-height: 1.2; }
+    .module-card p  { font-size: 0.84rem; line-height: 1.65; color: var(--muted); }
+    .label {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.55rem;
+      color: var(--muted);
+    }
+    @keyframes cardIn { to { opacity:1; transform:translateY(0); } }
+
+    .module-more {
+      display: flex;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    /* ── CONTACT ── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .contact-card {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.012);
+      padding: 20px;
+      display: grid;
+      gap: 8px;
+      text-decoration: none;
+      transition: background 180ms, border-color 180ms;
+    }
+    .contact-card:hover {
+      background: rgba(255,255,255,0.038);
+      border-color: var(--line-strong);
+    }
+    .contact-card h3 { font-size: 1.1rem; }
+    .contact-card p  { font-size: 0.87rem; color: var(--muted); line-height: 1.62; }
+
+    /* ── FOOTER ── */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 26px 0 6px;
+      border-top: 1px solid var(--line);
+      margin-top: 56px;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.6rem;
+      color: var(--muted);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 940px) {
+      .main-header {
+        grid-template-columns: auto 1fr;
+      }
+      .mini { display: none; }
+      .module-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+      .contact-grid { grid-template-columns: 1fr; }
+      .section-body { padding-right: 28px; }
+      .section-corner { display: none; }
+    }
+    @media (max-width: 580px) {
+      .page { width: calc(100vw - 24px); }
+      .main-header {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .nav {
+        justify-self: start;
+        gap: 4px;
+      }
+      .nav a { padding: 8px 10px; }
+      h1 { font-size: clamp(2.6rem, 13vw, 3.8rem); }
+      .hero { padding: 60px 0 44px; }
+      .hero-stats { gap: 18px; }
+      .module-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; }
+      .demo-hint { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <header class="main-header">
+      <a class="brand" href="./">
+        <img src="Neon KittyClient Logo Design.png" alt="KittyClient" />
+        <div class="brand-copy">
+          <strong>KittyClient</strong>
+          <span>Home</span>
+        </div>
+      </a>
+      <nav class="nav">
+        <a class="active" href="./">Home</a>
+        <a href="Account/">Account</a>
+        <a href="Subscribe/">Subscribe</a>
+        <a href="Support/">Support</a>
+      </nav>
+      <div class="mini">Build Faster · Play Cleaner</div>
+    </header>
+
+    <main>
+
+      <!-- HERO -->
+      <section class="hero">
+        <span class="eyebrow">Building · Games · Utilities · Visual identity</span>
+        <h1 id="heroTitle">Build Faster Play Cleaner.</h1>
+        <p class="hero-lead">A Minecraft client built around personality and precision. Eighty modules, one unified experience.</p>
+        <div class="hero-stats">
+          <div class="stat">
+            <span class="stat-num">80</span>
+            <span class="stat-label">Modules</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">4</span>
+            <span class="stat-label">Focus areas</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num">3</span>
+            <span class="stat-label">Pages</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3D DEMO -->
+      <section class="section" id="demo">
+        <header class="section-header">
+          <span>01</span>
+          <span>Tech Demo</span>
+          <span style="margin-left:auto;opacity:0.4">Interactive client preview</span>
+        </header>
+        <div class="demo-wrap">
+          <div class="p-corner tl"></div>
+          <div class="p-corner tr"></div>
+          <div class="p-corner bl"></div>
+          <div class="p-corner br"></div>
+          <div class="demo-hint">Drag to orbit &nbsp;·&nbsp; Scroll to zoom &nbsp;·&nbsp; Click a button to explore</div>
+          <canvas id="demoCanvas" tabindex="0"></canvas>
+          <div id="demoLoading">
+            <span id="demoLoadText">Initialising client models</span>
+            <div class="load-bar"></div>
+          </div>
+          <div id="demoPanel" class="demo-panel">
+            <button class="demo-panel-close" id="demoPanelClose" aria-label="Close">×</button>
+            <span class="demo-panel-label" id="demoPanelLabel"></span>
+            <h3 id="demoPanelTitle"></h3>
+            <p id="demoPanelDesc"></p>
+          </div>
+          <div id="demoTooltip"></div>
+        </div>
+      </section>
+
+      <!-- MANIFESTO -->
+      <section class="section" id="manifesto">
+        <header class="section-header">
+          <span>02</span>
+          <span>Manifesto</span>
+        </header>
+        <div class="section-body">
+          <div class="section-corner">
+            <svg viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="44"/>
+              <circle cx="50" cy="50" r="29"/>
+              <circle cx="50" cy="50" r="14"/>
+            </svg>
+          </div>
+          <h2>Not a toggle pile. A full client world.</h2>
+          <p class="intro">KittyClient keeps utility and personality in the same system. Practical tools sit alongside custom themes, animated menus, and social presence — all under one recognisable identity.</p>
+        </div>
+      </section>
+
+      <!-- MODULES -->
+      <section class="section" id="modules">
+        <header class="section-header">
+          <span>03</span>
+          <span>Modules</span>
+        </header>
+        <div class="section-body no-pad-right">
+          <h2>Search the module set.</h2>
+          <p class="intro" style="margin-bottom:20px">Eighty modules across building, games, utilities, visual tools, and more.</p>
+          <div class="module-toolbar">
+            <input id="moduleSearch" class="input" type="search" placeholder="Search modules…" aria-label="Search modules" />
+            <button class="chip active" data-filter="All">All</button>
+            <button class="chip" data-filter="Automation">Automation</button>
+            <button class="chip" data-filter="Building">Building</button>
+            <button class="chip" data-filter="Chat">Chat</button>
+            <button class="chip" data-filter="Games">Games</button>
+            <button class="chip" data-filter="Visual">Visual</button>
+          </div>
+          <div class="module-grid" id="moduleGrid"></div>
+          <div class="module-more">
+            <button id="moduleToggle" class="chip" type="button" hidden>More Modules</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="section" id="contact">
+        <header class="section-header">
+          <span>04</span>
+          <span>Contact</span>
+        </header>
+        <div class="section-body">
+          <div class="section-corner">
+            <svg viewBox="0 0 100 100">
+              <rect x="12" y="12" width="76" height="76"/>
+              <circle cx="50" cy="50" r="25"/>
+            </svg>
+          </div>
+          <h2>Enter the platform.</h2>
+          <p class="intro" style="margin-bottom:22px">Create an account or get support for client access and setup.</p>
+          <div class="contact-grid">
+            <a class="contact-card" href="Account/">
+              <span class="label">Account</span>
+              <h3>Account portal</h3>
+              <p>Create your identity, sign in, and connect your KittyClient access.</p>
+            </a>
+            <a class="contact-card" href="Support/">
+              <span class="label">Support</span>
+              <h3>Support</h3>
+              <p>Player help, client access questions, and guided setup routes.</p>
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      <p>Building · Games · Fun · Quality of life</p>
+      <p>KittyClient / March 2026</p>
+    </footer>
+
+  </div><!-- .page -->
+
+  <!-- ── THREE.JS IMPORTMAP ── -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.162.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.162.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <!-- ── 3D DEMO ── -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { OBJLoader }     from 'three/addons/loaders/OBJLoader.js';
+    import { MTLLoader }     from 'three/addons/loaders/MTLLoader.js';
+
+    const canvas      = document.getElementById('demoCanvas');
+    const loadingEl   = document.getElementById('demoLoading');
+    const loadText    = document.getElementById('demoLoadText');
+    const panel       = document.getElementById('demoPanel');
+    const panelClose  = document.getElementById('demoPanelClose');
+    const panelLabel  = document.getElementById('demoPanelLabel');
+    const panelTitle  = document.getElementById('demoPanelTitle');
+    const panelDesc   = document.getElementById('demoPanelDesc');
+    const tooltip     = document.getElementById('demoTooltip');
+
+    /* ── SCENE ── */
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
+    scene.fog = new THREE.FogExp2(0x000000, 0.038);
+
+    /* ── CAMERA ── */
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 300);
+    camera.position.set(14, 2, 0);
+
+    /* ── RENDERER ── */
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.NoToneMapping;
+
+    function resize() {
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(canvas);
+    resize();
+
+    /* ── CONTROLS ── */
+    const controls = new OrbitControls(camera, canvas);
+    controls.enableDamping  = true;
+    controls.dampingFactor  = 0.055;
+    controls.minDistance    = 2;
+    controls.maxDistance    = 35;
+    controls.maxPolarAngle  = Math.PI * 0.56;
+    controls.autoRotate     = true;
+    controls.autoRotateSpeed = 0.05;
+    controls.addEventListener('start', () => { controls.autoRotate = false; });
+
+    /* ── LIGHTS ── */
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+
+    const keyLight = new THREE.PointLight(0xffffff, 3, 30);
+    keyLight.position.set(3, 7, 8);
+    scene.add(keyLight);
+
+    const fillLight = new THREE.PointLight(0xfff0f8, 1.5, 22);
+    fillLight.position.set(-8, 1, -3);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.PointLight(0xffffff, 1.2, 20);
+    rimLight.position.set(5, -3, -10);
+    scene.add(rimLight);
+
+    const topLight = new THREE.PointLight(0xfff0f8, 1.0, 18);
+    topLight.position.set(0, 10, 0);
+    scene.add(topLight);
+
+    /* ── ROOM / FLOOR ── */
+    // Large dark room box (rendered from inside)
+    const roomGeo = new THREE.BoxGeometry(80, 50, 80);
+    const roomMat = new THREE.MeshLambertMaterial({ color: 0x000000, side: THREE.BackSide });
+    scene.add(new THREE.Mesh(roomGeo, roomMat));
+
+    // Grid floor
+    const gridFloor = new THREE.GridHelper(80, 80, 0xffffff, 0x444444);
+    gridFloor.position.y = -5;
+    scene.add(gridFloor);
+
+    /* ── MATERIALS ── */
+    // BACKGROUND faces: black (bgArgb), 50% transparent
+    const bgMat = new THREE.MeshPhongMaterial({
+      color:       0x000000,
+      emissive:    0x000000,
+      transparent: true,
+      opacity:     0.5,
+      side:        THREE.DoubleSide,
+      depthWrite:  false,
+    });
+
+    // LINE faces: white (linesArgb)
+    const linesMat = new THREE.MeshPhongMaterial({
+      color:    0xffffff,
+      emissive: 0xffffff,
+      emissiveIntensity: 0.6,
+      side:     THREE.DoubleSide,
+    });
+
+    // Button default: light pink-white (#FFF4FB from leftArgb/rightArgb/etc.)
+    const btnMat = new THREE.MeshPhongMaterial({
+      color:    0xfff4fb,
+      emissive: 0xfff4fb,
+      emissiveIntensity: 0.6,
+      side:     THREE.DoubleSide,
+    });
+
+    // Button hovered: brighter white for hover feedback
+    const btnHoverMat = new THREE.MeshPhongMaterial({
+      color:    0xffffff,
+      emissive: 0x222222,
+      side:     THREE.DoubleSide,
+    });
+
+    function assignMaterials(obj, isButton) {
+      obj.traverse(child => {
+        if (!child.isMesh) return;
+        const pick = (mat) => {
+          if (isButton) return btnMat.clone();
+          const n = (mat?.name || '').toLowerCase();
+          if (n === 'background') return bgMat.clone();
+          // lines, material.001, char, anything else → lines style
+          return linesMat.clone();
+        };
+        if (Array.isArray(child.material)) {
+          child.material = child.material.map(pick);
+        } else {
+          child.material = pick(child.material);
+        }
+      });
+    }
+
+    /* ── BUTTON INFO ── */
+    const BUTTON_INFO = {
+      purritone: {
+        label: 'Automation',
+        title: 'Purritone',
+        desc:  "Purritone handles movement and tasks for you — pathfinding, automated building, resource gathering, and goal-driven actions. Set an objective and let it run.",
+      },
+      settings: {
+        label: 'Configuration',
+        title: 'Settings',
+        desc:  "The client control centre. Configure every module, bind keys, adjust visual themes, and personalise KittyClient down to the last detail — all from one panel.",
+      },
+      ui: {
+        label: 'Interface Studio',
+        title: 'UI',
+        desc:  "Reshape the entire KittyClient interface. Choose HUD layouts, toggle 3D panels, rearrange elements, and blend theme presets to build a look that is entirely yours.",
+      },
+      help: {
+        label: 'Documentation',
+        title: 'Help',
+        desc:  "Setup guides, module references, account support, and answers to common questions — all surfaced from inside the client so help is always one click away.",
+      },
+    };
+
+    /* ── LOADER ── */
+    const BASE = 'Assets/ui3d/';
+
+    function loadModel(filename) {
+      return new Promise(resolve => {
+        const mtl = new MTLLoader();
+        mtl.setPath(BASE);
+        mtl.load(
+          filename + '.mtl',
+          mats => {
+            mats.preload();
+            const obj = new OBJLoader();
+            obj.setMaterials(mats);
+            obj.setPath(BASE);
+            obj.load(filename + '.obj', resolve, null, () => resolve(null));
+          },
+          null,
+          () => {
+            // MTL missing — try OBJ alone
+            const obj = new OBJLoader();
+            obj.setPath(BASE);
+            obj.load(filename + '.obj', resolve, null, () => resolve(null));
+          }
+        );
+      });
+    }
+
+    /* ── PLAYER SKIN ── */
+    let playerSkinMat = null;
+    let pendingMcUUID = undefined;
+
+    function makeGridTexture() {
+      const size = 256;
+      const c = document.createElement('canvas');
+      c.width = size; c.height = size;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#111111';
+      ctx.fillRect(0, 0, size, size);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 1;
+      const step = 16;
+      for (let x = 0; x <= size; x += step) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, size); ctx.stroke();
+      }
+      for (let y = 0; y <= size; y += step) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(size, y); ctx.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      t.flipY = true;
+      t.colorSpace = THREE.SRGBColorSpace;
+      return t;
+    }
+
+    function defaultSkinTex() {
+      if (Math.random() < 0.001) {
+        return new THREE.TextureLoader().load('Assets/Player_Model_Skins/Player1.png', t => {
+          t.magFilter = THREE.NearestFilter;
+          t.minFilter = THREE.NearestFilter;
+          t.flipY = true;
+          t.colorSpace = THREE.SRGBColorSpace;
+        });
+      }
+      return makeGridTexture();
+    }
+
+    window.addEventListener('kc:skinupdate', e => {
+      pendingMcUUID = e.detail.mcUUID;
+      if (!playerSkinMat) return;
+      const mcUUID = e.detail.mcUUID;
+      if (!mcUUID) {
+        playerSkinMat.map = defaultSkinTex();
+        playerSkinMat.needsUpdate = true;
+        return;
+      }
+      const t = new THREE.TextureLoader().load(`https://mc-heads.net/skin/${mcUUID}`);
+      t.magFilter = THREE.NearestFilter;
+      t.minFilter = THREE.NearestFilter;
+      t.flipY = true;
+      t.colorSpace = THREE.SRGBColorSpace;
+      playerSkinMat.map = t;
+      playerSkinMat.needsUpdate = true;
+    });
+
+    /* ── GROUPS ── */
+    const floatGroup = new THREE.Group();
+    scene.add(floatGroup);
+
+    const buttonObjects = []; // { obj, id, meshes, defaultMats }
+    let playerObj = null;
+
+    const UI_FILES = [
+      '3D_UI_ELEMENT_LEFT',
+      '3D_UI_ELEMENT_RIGHT',
+      '3D_UI_ELEMENT_BOTTOM',
+      '3D_UI_ELEMENT_MIDDLE',
+      '3D_UI_ELEMENT_PLAYER',
+    ];
+    const BTN_FILES = [
+      { file: '3D_UI_ELEMENT_PURRITONE_BUTTON', id: 'purritone' },
+      { file: '3D_UI_ELEMENT_SETTINGS_BUTTON',  id: 'settings'  },
+      { file: '3D_UI_ELEMENT_UI_BUTTON',        id: 'ui'        },
+      { file: '3D_UI_ELEMENT_HELP_BUTTON',      id: 'help'      },
+    ];
+    const TOTAL = UI_FILES.length + BTN_FILES.length;
+    let loaded = 0;
+
+    function onLoad() {
+      loaded++;
+      loadText.textContent = `Loading models — ${loaded} / ${TOTAL}`;
+    }
+
+    async function loadAll() {
+      // UI elements
+      for (const f of UI_FILES) {
+        const obj = await loadModel(f);
+        if (obj) {
+          if (f.includes('PLAYER')) {
+            // Wrap in a pivot centred on the model so rotation.y spins in place
+            const pivot = new THREE.Group();
+            const box = new THREE.Box3().setFromObject(obj);
+            const center = box.getCenter(new THREE.Vector3());
+            obj.position.sub(center);
+            pivot.position.copy(center);
+            pivot.position.y -= 0.15;
+            pivot.add(obj);
+            floatGroup.add(pivot);
+            playerObj = pivot;
+
+            // Apply skin texture — raw, unlit, pixel-perfect
+            playerSkinMat = new THREE.MeshBasicMaterial({
+              map:         defaultSkinTex(),
+              transparent: true,
+              alphaTest:   0.5,
+              side:        THREE.FrontSide,
+            });
+            // Apply any skin that arrived before the model finished loading
+            if (pendingMcUUID !== undefined) {
+              window.dispatchEvent(new CustomEvent('kc:skinupdate', { detail: { mcUUID: pendingMcUUID } }));
+            }
+            obj.traverse(child => {
+              if (child.isMesh) child.material = playerSkinMat;
+            });
+          } else {
+            assignMaterials(obj, false);
+            floatGroup.add(obj);
+          }
+        }
+        onLoad();
+      }
+
+      // Buttons
+      for (const b of BTN_FILES) {
+        const obj = await loadModel(b.file);
+        if (obj) {
+          assignMaterials(obj, true);
+          floatGroup.add(obj);
+          const meshes = [];
+          obj.traverse(c => c.isMesh && meshes.push(c));
+
+          // Invisible bounding-box hitbox for stable raycasting
+          const bbox = new THREE.Box3().setFromObject(obj);
+          const bsize = bbox.getSize(new THREE.Vector3());
+          const bcenter = bbox.getCenter(new THREE.Vector3());
+          const hitbox = new THREE.Mesh(
+            new THREE.BoxGeometry(bsize.x, bsize.y, bsize.z),
+            new THREE.MeshBasicMaterial({ visible: false })
+          );
+          hitbox.position.copy(bcenter).sub(obj.position);
+          obj.add(hitbox);
+
+          buttonObjects.push({
+            obj,
+            id: b.id,
+            meshes,
+            hitbox,
+            defaultMats: meshes.map(m =>
+              Array.isArray(m.material) ? m.material.map(mat => mat.clone()) : m.material.clone()
+            ),
+          });
+        }
+        onLoad();
+      }
+
+      // Centre the float group around its bounding box
+      const box  = new THREE.Box3().setFromObject(floatGroup);
+      const ctr  = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+
+      floatGroup.children.forEach(child => child.position.sub(ctr));
+      gridFloor.position.y = -(size.y * 0.5) - 1.4;
+
+      // Fit camera
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const fovRad = camera.fov * (Math.PI / 180);
+      const dist   = (maxDim / 2) / Math.tan(fovRad / 2) * 1.6;
+      camera.position.set(dist, size.y * 0.18, 0);
+      controls.target.set(0, 0, 0);
+      controls.update();
+
+      // Fade out loader
+      loadingEl.classList.add('fade-out');
+      setTimeout(() => { loadingEl.style.display = 'none'; }, 520);
+    }
+
+    loadAll().catch(console.error);
+
+    /* ── RAYCASTING ── */
+    const raycaster = new THREE.Raycaster();
+    const mouse     = new THREE.Vector2();
+    let hoveredBtn  = null;
+    let clickAnim   = null; // { btn, startMs }
+
+    function hitButton(e) {
+      const r = canvas.getBoundingClientRect();
+      mouse.x =  ((e.clientX - r.left) / r.width)  * 2 - 1;
+      mouse.y = -((e.clientY - r.top)  / r.height) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const hitboxes = buttonObjects.map(b => b.hitbox);
+      const hits = raycaster.intersectObjects(hitboxes);
+      if (!hits.length) return null;
+      const hitMesh = hits[0].object;
+      return buttonObjects.find(b => b.hitbox === hitMesh) || null;
+    }
+
+    function setButtonHover(btn, hover) {
+      btn.meshes.forEach((m, i) => {
+        if (hover) {
+          m.material = Array.isArray(m.material)
+            ? m.material.map(() => btnHoverMat)
+            : btnHoverMat;
+        } else {
+          m.material = Array.isArray(btn.defaultMats[i])
+            ? btn.defaultMats[i].map(mat => mat)
+            : btn.defaultMats[i];
+        }
+      });
+    }
+
+    canvas.addEventListener('mousemove', e => {
+      const hit = hitButton(e);
+
+      if (hit !== hoveredBtn) {
+        if (hoveredBtn) setButtonHover(hoveredBtn, false);
+        hoveredBtn = hit;
+        if (hoveredBtn) setButtonHover(hoveredBtn, true);
+      }
+
+      canvas.style.cursor = hit ? 'pointer' : '';
+
+      // Tooltip
+      if (hit && BUTTON_INFO[hit.id]) {
+        tooltip.textContent = BUTTON_INFO[hit.id].title;
+        tooltip.style.left  = (e.clientX - canvas.getBoundingClientRect().left + 14) + 'px';
+        tooltip.style.top   = (e.clientY - canvas.getBoundingClientRect().top  - 28) + 'px';
+        tooltip.classList.add('show');
+      } else {
+        tooltip.classList.remove('show');
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      if (hoveredBtn) { setButtonHover(hoveredBtn, false); hoveredBtn = null; }
+      canvas.style.cursor = '';
+      tooltip.classList.remove('show');
+    });
+
+    canvas.addEventListener('click', e => {
+      const hit = hitButton(e);
+      if (!hit) return;
+      const info = BUTTON_INFO[hit.id];
+      if (!info) return;
+      panelLabel.textContent = info.label;
+      panelTitle.textContent = info.title;
+      panelDesc.textContent  = '';
+      panel.classList.add('visible');
+      panelDesc.classList.add('is-typing');
+      let di = 0;
+      const dtext = info.desc;
+      const dstep = Math.max(16, Math.round(900 / dtext.length));
+      clearTimeout(panelDesc._typeTimer);
+      const dtick = () => {
+        panelDesc.textContent = dtext.slice(0, ++di);
+        if (di < dtext.length) panelDesc._typeTimer = setTimeout(dtick, dstep);
+        else panelDesc.classList.remove('is-typing');
+      };
+      panelDesc._typeTimer = setTimeout(dtick, 60);
+      // Reset any in-progress anim on another button
+      if (clickAnim) clickAnim.btn.obj.scale.set(1, 1, 1);
+      clickAnim = { btn: hit, startMs: performance.now() };
+    });
+
+    panelClose.addEventListener('click', () => panel.classList.remove('visible'));
+
+    /* ── ANIMATION LOOP ── */
+    let clock = 0;
+
+    (function animate() {
+      requestAnimationFrame(animate);
+      clock += 0.008;
+
+      // Gentle float + slow Y-rotation drift
+      floatGroup.position.y = Math.sin(clock * 0.9) * 0.14;
+      floatGroup.rotation.y = Math.sin(clock * 0.22) * 0.04;
+
+      // Player spin
+      if (playerObj) playerObj.rotation.y += 0.012;
+
+      // Button click pop animation
+      if (clickAnim) {
+        const t = Math.min((performance.now() - clickAnim.startMs) / 380, 1);
+        const s = 1 + 0.18 * Math.sin(t * Math.PI);
+        clickAnim.btn.obj.scale.set(s, s, s);
+        if (t >= 1) {
+          clickAnim.btn.obj.scale.set(1, 1, 1);
+          clickAnim = null;
+        }
+      }
+
+      controls.update();
+      renderer.render(scene, camera);
+    })();
+  </script>
+
+  <!-- ── MODULES + PAGE TRANSITIONS ── -->
+  <script>
+    const modules = [
+      { name: "Auto Breeder Plus",           category: "Automation", desc: "Automates animal breeding tasks for smoother farm management." },
+      { name: "Auto Pearl Loader",           category: "Automation", desc: "Automates loading or preparing ender pearls for faster movement setups." },
+      { name: "Better Anti-AFK",             category: "Automation", desc: "Keeps the player active to help avoid AFK kick timers." },
+      { name: "Planet Harvester",            category: "Automation", desc: "Automates harvesting and resource collection across routine loops." },
+      { name: "Storage Spam",                category: "Automation", desc: "Rapidly interacts with storage for fast transfer and stress-test behaviour." },
+      { name: "Totem OBJ Loader",            category: "Beta",       desc: "Replaces or renders the totem with a custom 3D OBJ model." },
+      { name: "Gradient Block Placer",       category: "Building",   desc: "Helps place blocks in controlled gradient-based build patterns." },
+      { name: "Missing Items",               category: "Building",   desc: "Shows which blocks or items are still missing from a build plan." },
+      { name: "OBJ Voxel ESP",               category: "Building",   desc: "Visualises imported OBJ-style shapes directly in voxel space." },
+      { name: "Selection Cube ESP",          category: "Building",   desc: "Renders selected build zones and cube regions in-world." },
+      { name: "Shape Visualizer",            category: "Building",   desc: "Previews geometric build shapes before placement and refinement." },
+      { name: "Drone Cam",                   category: "Camera",     desc: "Free camera and drone-style cinematic movement for cleaner shots." },
+      { name: "Spectate Nearest Player",     category: "Camera",     desc: "Switches view to the nearest player for quick spectate flow." },
+      { name: "Ad Blocker",                  category: "Chat",       desc: "Filters ad-like or spam-heavy chat lines for a cleaner feed." },
+      { name: "Auto Meow",                   category: "Chat",       desc: "Automatically sends greeting or personality chat lines." },
+      { name: "Chat GIFs",                   category: "Chat",       desc: "Displays GIF-like media inline inside the chat experience." },
+      { name: "Chat Plus",                   category: "Chat",       desc: "Expands chat with better history, formatting, and utility." },
+      { name: "Chat Tab",                    category: "Chat",       desc: "Organises chat into cleaner tabbed channels and views." },
+      { name: "ChatGPT",                     category: "Chat",       desc: "Adds AI-style assistant behaviour directly into the client chat layer." },
+      { name: "Keybind Chat",                category: "Chat",       desc: "Sends preset chat messages through fast keybound actions." },
+      { name: "Player Chat Plus",            category: "Chat",       desc: "Upgrades player chat handling with richer formatting and readability." },
+      { name: "Phantom Turret",              category: "Combat",     desc: "Combat-focused behaviour aimed at reacting to phantom threats." },
+      { name: "Spawner ESP Debug",           category: "Debug",      desc: "Debug overlay for tracking and inspecting mob spawners." },
+      { name: "Edex UI",                     category: "Display",    desc: "Terminal and eDEX-inspired overlay interface for a custom system feel." },
+      { name: "Glow UI Test",                category: "Display",    desc: "Experimental module for glow effects and interface visual testing." },
+      { name: "Beacon Coverage",             category: "ESP",        desc: "Shows beacon range and coverage space in the world." },
+      { name: "Chicken Jockey",              category: "ESP",        desc: "Highlights chicken jockeys for instant identification." },
+      { name: "Circle ESP",                  category: "ESP",        desc: "Renders circular highlights for entities or world positions." },
+      { name: "Floating Water ESP",          category: "ESP",        desc: "Highlights floating water sources and odd water placements." },
+      { name: "Lightning Coverage",          category: "ESP",        desc: "Displays lightning-related range and coverage information." },
+      { name: "Player Circle ESP",           category: "ESP",        desc: "Uses circle-based highlighting to track player positions." },
+      { name: "Sphere ESP",                  category: "ESP",        desc: "Creates spherical highlight rendering for target awareness." },
+      { name: "Graffiti Spray",              category: "Fun",        desc: "Spray and graffiti-style visual tool for playful expression." },
+      { name: "Nextbot Stalker",             category: "Fun",        desc: "Horror-flavoured nextbot stalker effect for chaotic sessions." },
+      { name: "Chess",                       category: "Games",      desc: "Playable chess built directly into the client." },
+      { name: "LiDAR Scanner",               category: "Games",      desc: "Scanner-style gameplay and visualisation module with technical flavour." },
+      { name: "Snake",                       category: "Games",      desc: "Classic snake minigame integrated into the client interface." },
+      { name: "Tetris",                      category: "Games",      desc: "Playable tetris minigame for quick arcade sessions." },
+      { name: "Tron-Game",                   category: "Games",      desc: "Neon light-cycle inspired minigame with Tron energy." },
+      { name: "Coordinate Odometer",         category: "HUD",        desc: "Tracks movement distance and coordinate travel over time." },
+      { name: "Sci-Fi HUD",                  category: "HUD",        desc: "Futuristic HUD overlay for a stronger KittyOS atmosphere." },
+      { name: "Discord Bot",                 category: "Misc",       desc: "Discord-related integration or bot control from the client layer." },
+      { name: "Hotbar Randomizer",           category: "Misc",       desc: "Randomises hotbar order or selection for experimental play." },
+      { name: "Lava Transferer",             category: "Misc",       desc: "Helps move or manage lava transfer tasks more cleanly." },
+      { name: "Refinement Game",             category: "Misc",       desc: "Experimental minigame or system module focused on refinement loops." },
+      { name: "Settings Demo",               category: "Misc",       desc: "Demonstrates and tests settings UI behaviours inside the client." },
+      { name: "To-Do Board",                 category: "Misc",       desc: "In-game task board and notes panel for planning sessions." },
+      { name: "Music DAW",                   category: "Music",      desc: "Music workstation and sequencer-style screen for creative audio flow." },
+      { name: "Radio",                       category: "Music",      desc: "Radio and audio playback module for ambient session sound." },
+      { name: "Flight Recorder",             category: "Navigation", desc: "Records travel paths and movement routes for playback and planning." },
+      { name: "Sci-Fi Navigator",            category: "Navigation", desc: "Navigation overlay and toolset with a futuristic systems feel." },
+      { name: "Auto Equip Elytra",           category: "Player",     desc: "Automatically swaps to elytra when movement conditions call for it." },
+      { name: "Elytra Replenish",            category: "Player",     desc: "Manages and restocks elytra-related usage over time." },
+      { name: "Streamer Mode",               category: "Privacy",    desc: "Hides chat, censors signs, spoofs coords, and masks sensitive HUD areas for streaming." },
+      { name: "Block Interaction Protector", category: "Safety",     desc: "Prevents accidental bed, anchor, log-strip, and dirt-path interactions." },
+      { name: "Creeper Protection",          category: "Safety",     desc: "Warns about or protects against creepers near the player or build." },
+      { name: "No Log Strip",                category: "Safety",     desc: "Stops accidental log stripping during fast building work." },
+      { name: "Primary Flight Display",      category: "Simulators", desc: "Aircraft-style flight instrument display rendered inside the client." },
+      { name: "Wheel Input Module",          category: "Simulators", desc: "Wheel or controller input support for more experimental control setups." },
+      { name: "Chest Search",                category: "Storage",    desc: "Searches and indexes chest contents for faster storage recall." },
+      { name: "Speed Module",                category: "Test",       desc: "Experimental movement and speed test module." },
+      { name: "Inventory Organizer",         category: "Utilities",  desc: "Sorts and organises inventory automatically during live play." },
+      { name: "KittyNotification",           category: "Utilities",  desc: "Branded notification and toast system for toggles and alerts." },
+      { name: "Annotation Tool",             category: "Visual",     desc: "Draws annotations and marks directly into the world or UI." },
+      { name: "Dragon Fly",                  category: "Visual",     desc: "Dragonfly-style visual effect module for atmospheric motion." },
+      { name: "Globe Wireframe Depth",       category: "Visual",     desc: "Globe and wireframe depth visualisation for dramatic world rendering." },
+      { name: "Hotbar Deluxe",               category: "Visual",     desc: "Enhanced hotbar visuals with a more premium presentation layer." },
+      { name: "Map & Jobs",                  category: "Visual",     desc: "Topographic map and jobs-style panel for structured world tasks." },
+      { name: "OBJ Loader",                  category: "Visual",     desc: "Loads and renders custom OBJ models inside the client." },
+      { name: "Oscilloscope Renderer",       category: "Visual",     desc: "Oscilloscope-style visual renderer for signal-heavy sci-fi atmosphere." },
+      { name: "ParticleSpider",              category: "Visual",     desc: "Spider-like particle visual effect for stylised environmental motion." },
+      { name: "Pet Cat",                     category: "Visual",     desc: "Cosmetic pet cat feature for extra KittyClient personality." },
+      { name: "Player Web Map",              category: "Visual",     desc: "Web-map style view tied to the player position and movement." },
+      { name: "Snowfall Module",             category: "Visual",     desc: "Snowfall particle and weather overlay for immersive ambience." },
+      { name: "Sonar Radar",                 category: "Visual",     desc: "Sonar and radar scanning display for technical world awareness." },
+      { name: "Spinning Tab Ring",           category: "Visual",     desc: "Spinning ring and tab visual effect for dynamic UI identity." },
+      { name: "Wireframe Mini Map (Advanced)", category: "Visual",   desc: "Advanced wireframe minimap for precise spatial awareness." },
+      { name: "FakeArmorStand",              category: "Visuals",    desc: "Fake armor stand visual or spawn-style effect for presentation." },
+      { name: "InventoryDisplay",            category: "Visuals",    desc: "Renders inventory directly on-screen for constant awareness." },
+      { name: "Advancement System",          category: "World",      desc: "Custom advancement and progression screen system for the wider client world." },
+    ];
+
+    const grid     = document.getElementById('moduleGrid');
+    const toggle   = document.getElementById('moduleToggle');
+    const search   = document.getElementById('moduleSearch');
+    const chips    = document.querySelectorAll('.chip[data-filter]');
+    const LIMIT    = 18;
+    let   filter   = 'All';
+    let   showAll  = false;
+    let   timer;
+
+    function render() {
+      const q   = search.value.trim().toLowerCase();
+      const vis = modules.filter(m => {
+        const ok = filter === 'All' || m.category === filter;
+        return ok && `${m.name} ${m.desc} ${m.category}`.toLowerCase().includes(q);
+      });
+      const shown = showAll ? vis : vis.slice(0, LIMIT);
+      toggle.hidden = vis.length <= LIMIT;
+      if (!toggle.hidden) toggle.textContent = showAll ? 'Show Fewer' : 'More Modules';
+
+      const html = shown.length
+        ? shown.map(m => `<article class="module-card">
+            <span class="label">${m.category}</span>
+            <h3>${m.name}</h3>
+            <p>${m.desc}</p>
+          </article>`).join('')
+        : `<article class="module-card">
+            <span class="label">Search</span>
+            <h3>No modules found</h3>
+            <p>Try a different search term or category.</p>
+          </article>`;
+
+      grid.classList.add('is-updating');
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        grid.innerHTML = html;
+        requestAnimationFrame(() => grid.classList.remove('is-updating'));
+      }, 150);
+    }
+
+    chips.forEach(c => c.addEventListener('click', () => {
+      chips.forEach(x => x.classList.remove('active'));
+      c.classList.add('active');
+      filter  = c.dataset.filter;
+      showAll = false;
+      render();
+    }));
+    search.addEventListener('input', () => { showAll = false; render(); });
+    toggle.addEventListener('click', () => { showAll = !showAll; render(); });
+    render();
+
+    /* ── HERO TYPING ── */
+    const heroEl   = document.getElementById('heroTitle');
+    const heroText = 'Build Faster Play Cleaner.';
+    function typeHero() {
+      if (!heroEl) return;
+      heroEl.classList.add('is-typing');
+      heroEl.textContent = '';
+      let i = 0;
+      const step = Math.max(18, Math.round(1400 / heroText.length));
+      const tick = () => {
+        heroEl.textContent = heroText.slice(0, ++i);
+        if (i < heroText.length) setTimeout(tick, step);
+        else heroEl.classList.remove('is-typing');
+      };
+      setTimeout(tick, 90);
+    }
+
+    /* ── PAGE TRANSITIONS ── */
+    window.addEventListener('pageshow', () => {
+      document.body.classList.add('is-ready');
+      document.body.classList.remove('is-leaving');
+    });
+    requestAnimationFrame(() => document.body.classList.add('is-ready'));
+    typeHero();
+
+    document.querySelectorAll('a[href]').forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href || href.startsWith('#') || href.startsWith('mailto:') || link.target === '_blank') return;
+      link.addEventListener('click', e => {
+        const url = new URL(link.href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        e.preventDefault();
+        document.body.classList.add('is-leaving');
+        setTimeout(() => { window.location.href = link.href; }, 250);
+      });
+    });
+  </script>
+
+  <!-- ── SKIN SYNC ── -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    const app = initializeApp({ apiKey: "AIzaSyA4_Mylnnsp0XDuf4awoJS-ro5WL-UfsZg", authDomain: "kittyclientauth.firebaseapp.com", projectId: "kittyclientauth", storageBucket: "kittyclientauth.firebasestorage.app", messagingSenderId: "950050113829", appId: "1:950050113829:web:317da48c762964e37032cc" });
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    onAuthStateChanged(auth, async user => {
+      let mcUUID = null;
+      if (user) {
+        try {
+          const snap = await getDoc(doc(db, "publicUsers", user.uid));
+          if (snap.exists()) mcUUID = snap.data().mcUUID || null;
+        } catch (_) {}
+      }
+      window.dispatchEvent(new CustomEvent("kc:skinupdate", { detail: { mcUUID } }));
+    });
+  </script>
+</body>
+</html>
