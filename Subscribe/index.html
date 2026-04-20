@@ -478,7 +478,8 @@
           if (["active", "trialing"].includes(status)) {
             subscribePanel.style.display = "none";
             alreadyPanel.classList.add("active");
-            const end = subSnap.data().currentPeriodEnd?.toDate?.();
+            const raw = subSnap.data().currentPeriodEnd;
+            const end = raw ? new Date(raw * 1000) : null;
             alreadyStatus.textContent = end
               ? `Subscription active · renews ${end.toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}`
               : "Subscription active.";

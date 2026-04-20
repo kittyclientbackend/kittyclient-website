@@ -382,7 +382,7 @@
         if (subSnap.exists()) {
           const data   = subSnap.data();
           const active = ["active", "trialing"].includes(data.status);
-          const end    = data.currentPeriodEnd?.toDate?.() || null;
+          const end    = data.currentPeriodEnd ? new Date(data.currentPeriodEnd * 1000) : null;
 
           subStatus.textContent  = data.status ? (data.status.charAt(0).toUpperCase() + data.status.slice(1)) : "—";
           subRenewal.textContent = fmtDate(end);
@@ -401,7 +401,8 @@
       try {
         const subSnap = await getDoc(doc(db, "subscriptions", user.uid));
         if (subSnap.exists() && ["active", "trialing"].includes(subSnap.data().status)) {
-          const end = subSnap.data().currentPeriodEnd?.toDate?.() || null;
+          const raw2 = subSnap.data().currentPeriodEnd;
+          const end = raw2 ? new Date(raw2 * 1000) : null;
           subStatus.textContent  = "Active";
           subRenewal.textContent = fmtDate(end);
           statusBanner.className   = "status-banner";
