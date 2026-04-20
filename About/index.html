@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KittyClient | About</title>
+  <meta name="description" content="KittyClient is a Minecraft utility mod and client built by xrayessay and mrthickcheeks for builders and enthusiasts." />
+  <style>
+    :root {
+      --bg: #111111;
+      --panel: #171717;
+      --line: rgba(255, 255, 255, 0.16);
+      --line-strong: rgba(255, 255, 255, 0.34);
+      --text: #f4f1e8;
+      --muted: rgba(244, 241, 232, 0.68);
+      --max: 1360px;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Georgia, "Times New Roman", serif;
+      background:
+        radial-gradient(circle at 20% 0%, rgba(255,255,255,0.05), transparent 30%),
+        radial-gradient(circle at 100% 20%, rgba(255,255,255,0.04), transparent 28%),
+        linear-gradient(180deg, #0e0e0e 0%, var(--bg) 100%);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(180deg, rgba(0,0,0,0.82), rgba(0,0,0,0.18));
+      z-index: 0;
+    }
+    a { color: inherit; }
+    h1, h2, h3, p { margin: 0; }
+    img { display: block; max-width: 100%; }
+
+    .page {
+      width: min(var(--max), calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 18px 0 56px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── HEADER ── */
+    .main-header {
+      position: sticky;
+      top: 16px;
+      z-index: 10;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 18px;
+      padding: 14px 18px;
+      border: 1px solid var(--line);
+      background: rgba(17, 17, 17, 0.88);
+      backdrop-filter: blur(14px);
+      opacity: 0;
+      transform: scaleX(0.985) scaleY(0.992) translateY(-6px);
+      transform-origin: top center;
+      transition: opacity 300ms ease, transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.is-ready .main-header { opacity: 1; transform: scaleX(1) scaleY(1) translateY(0); }
+    body.is-leaving .main-header { opacity: 0.96; transform: scaleX(0.992) scaleY(0.996) translateY(-3px); }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      opacity: 0;
+      transform: translateX(-18px);
+      transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.is-ready .brand { opacity: 1; transform: translateX(0); }
+    .brand img {
+      width: 48px; height: 48px;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      padding: 4px;
+    }
+    .brand-copy,
+    .nav,
+    .nav a,
+    .eyebrow,
+    .section-header,
+    .tag,
+    .micro {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+    }
+    .brand-copy { display: grid; gap: 2px; }
+    .brand-copy strong { font-size: 0.78rem; font-weight: 700; }
+    .brand-copy span { font-size: 0.62rem; color: var(--muted); }
+
+    .nav {
+      justify-self: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.is-ready .nav { opacity: 1; transform: translateY(0); }
+    .nav a {
+      padding: 10px 12px;
+      text-decoration: none;
+      color: var(--muted);
+      font-size: 0.66rem;
+      border: 1px solid transparent;
+      transition: color 220ms ease, border-color 220ms ease, background 220ms ease;
+    }
+    .nav a:hover, .nav a.active {
+      color: var(--text);
+      border-color: var(--line);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .micro {
+      justify-self: end;
+      color: var(--muted);
+      font-size: 0.64rem;
+      opacity: 0;
+      transform: translateX(18px);
+      transition: opacity 320ms ease, transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.is-ready .micro { opacity: 1; transform: translateX(0); }
+
+    /* ── PAGE TRANSITIONS ── */
+    main, footer {
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 420ms ease, transform 420ms ease;
+    }
+    body.is-ready main,
+    body.is-ready footer { opacity: 1; transform: translateY(0); }
+    body.is-leaving main,
+    body.is-leaving footer { opacity: 0; transform: translateY(14px); }
+
+    /* ── HERO ── */
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+      gap: 24px;
+      align-items: stretch;
+      padding: 44px 0 18px;
+    }
+    .hero-copy,
+    .hero-side,
+    .section-body,
+    .creator-card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0.01));
+      box-shadow: var(--shadow);
+    }
+    .hero-copy { padding: 28px; }
+    .eyebrow {
+      color: var(--muted);
+      font-size: 0.68rem;
+      display: inline-block;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: clamp(2.9rem, 6.5vw, 5.6rem);
+      line-height: 0.9;
+      font-weight: 400;
+      letter-spacing: -0.055em;
+      margin-bottom: 18px;
+      max-width: 12ch;
+    }
+    p { color: var(--muted); line-height: 1.78; }
+
+    .hero-side {
+      padding: 0;
+      display: grid;
+      gap: 0;
+      align-self: stretch;
+    }
+    .fact {
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      align-content: start;
+      gap: 6px;
+    }
+    .fact:last-child { border-bottom: none; }
+    .fact strong {
+      font-weight: 400;
+      font-size: 1.05rem;
+      color: var(--text);
+      font-family: Georgia, serif;
+    }
+
+    /* ── SECTIONS ── */
+    .section { padding-top: 34px; }
+    .section-header {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.68rem;
+      margin-bottom: 0;
+    }
+    .section-body {
+      position: relative;
+      display: grid;
+      gap: 22px;
+      margin-top: 18px;
+      padding: 28px 112px 28px 28px;
+    }
+    .graphic {
+      position: absolute;
+      top: 18px; right: 18px;
+      width: 72px; height: 72px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.015);
+    }
+    .graphic svg {
+      width: 72%;
+      fill: none;
+      stroke: rgba(255,255,255,0.9);
+      stroke-width: 1.5;
+    }
+    .content h2 {
+      font-size: clamp(1.9rem, 3.5vw, 3rem);
+      line-height: 0.95;
+      font-weight: 400;
+      letter-spacing: -0.05em;
+      max-width: 14ch;
+      margin-bottom: 14px;
+    }
+    .content p + p { margin-top: 12px; }
+
+    /* ── TEAM ── */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .creator-card {
+      padding: 28px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+    .creator-avatar {
+      width: 80px; height: 80px;
+      border: 1px solid var(--line);
+      object-fit: cover;
+      background: rgba(255,255,255,0.03);
+      image-rendering: pixelated;
+    }
+    .creator-meta { display: grid; gap: 5px; }
+    .creator-role {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 0.62rem;
+      color: var(--muted);
+    }
+    .creator-card h3 {
+      font-size: 1.7rem;
+      font-weight: 400;
+      letter-spacing: -0.035em;
+      line-height: 1;
+    }
+
+    /* ── DONATION ── */
+    .donation-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    .donation-fact {
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.015);
+      padding: 20px;
+      display: grid;
+      gap: 8px;
+    }
+    .donation-fact strong {
+      font-weight: 400;
+      font-size: 1.05rem;
+      font-family: Georgia, serif;
+      color: var(--text);
+    }
+
+    /* ── SOCIALS ── */
+    .social-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      padding: 13px 18px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.012);
+      text-decoration: none;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      font-size: 0.63rem;
+      color: var(--muted);
+      transition: background 180ms ease, border-color 180ms ease, color 180ms ease;
+    }
+    .social-link:hover {
+      background: rgba(255,255,255,0.055);
+      border-color: var(--line-strong);
+      color: var(--text);
+    }
+    .social-link svg {
+      width: 16px; height: 16px;
+      fill: currentColor;
+      flex-shrink: 0;
+      opacity: 0.7;
+      transition: opacity 180ms ease;
+    }
+    .social-link:hover svg { opacity: 1; }
+
+    /* ── FOOTER ── */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 26px 0 6px;
+      border-top: 1px solid var(--line);
+      margin-top: 56px;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-size: 0.6rem;
+      color: var(--muted);
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1080px) {
+      .hero { grid-template-columns: 1fr; }
+      .main-header { grid-template-columns: auto 1fr; }
+      .micro { display: none; }
+      .nav { justify-self: start; }
+      .section-body { padding-right: 28px; }
+      .graphic { display: none; }
+    }
+    @media (max-width: 700px) {
+      .page { width: min(var(--max), calc(100vw - 24px)); }
+      .main-header {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 12px 14px;
+      }
+      .nav { justify-self: start; gap: 4px; }
+      .nav a { padding: 8px 10px; }
+      .team-grid { grid-template-columns: 1fr; }
+      .donation-grid { grid-template-columns: 1fr; }
+      h1 { font-size: clamp(2.6rem, 13vw, 4rem); }
+      footer { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+
+    <header class="main-header">
+      <a class="brand" href="../">
+        <img src="../Neon KittyClient Logo Design.png" alt="KittyClient logo" />
+        <div class="brand-copy">
+          <strong>KittyClient</strong>
+          <span>About</span>
+        </div>
+      </a>
+      <nav class="nav">
+        <a href="../">Home</a>
+        <a href="../Account/">Account</a>
+        <a href="../Subscribe/">Subscribe</a>
+        <a href="../Support/">Support</a>
+        <a class="active" href="./">About</a>
+      </nav>
+      <div class="micro">Builder Tools · Games · Utility</div>
+    </header>
+
+    <main>
+
+      <!-- HERO -->
+      <section class="hero">
+        <article class="hero-copy">
+          <span class="eyebrow">01 / About</span>
+          <h1>Built for builders. Loved by players.</h1>
+          <p>KittyClient is a Minecraft utility mod and client platform created by two developers who wanted something more — a client that takes building seriously, adds genuine fun, and carries its own visual identity. It is a real product, built with real craft, and kept alive entirely by its community.</p>
+        </article>
+        <aside class="hero-side">
+          <div class="fact">
+            <strong>Utility Mod</strong>
+            <p>80+ modules covering building, automation, games, and visual tools — all under one unified client.</p>
+          </div>
+          <div class="fact">
+            <strong>Community Funded</strong>
+            <p>Supported entirely by monthly donations. As long as the community is behind it, we keep building.</p>
+          </div>
+          <div class="fact">
+            <strong>Two Founders</strong>
+            <p>One builder. One coder. Both dedicated to making Minecraft more interesting for enthusiasts.</p>
+          </div>
+        </aside>
+      </section>
+
+      <!-- THE CLIENT -->
+      <section class="section">
+        <header class="section-header">
+          <span>02</span>
+          <span>The Client</span>
+          <span style="margin-left:auto; opacity:0.4;">What we built</span>
+        </header>
+        <div class="section-body">
+          <div class="graphic">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <rect x="8" y="8" width="84" height="84"/>
+              <rect x="24" y="24" width="52" height="52"/>
+              <rect x="40" y="40" width="20" height="20"/>
+            </svg>
+          </div>
+          <div class="content">
+            <h2>More than a toggle list.</h2>
+            <p>KittyClient was built with a clear vision: a Minecraft utility client that respects builders, integrates games and interactive experiences, and feels like a real, cohesive product. Every module, visual layer, and system belongs to the same world — one where practical utility and personality live together.</p>
+            <p>From gradient block placers and shape visualisers to chess, snake, a music DAW, and a full 3D UI — KittyClient covers genuine creative work and real fun inside a single identity. It is a platform for builders and Minecraft enthusiasts who want more out of their client.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- THE TEAM -->
+      <section class="section">
+        <header class="section-header">
+          <span>03</span>
+          <span>The Team</span>
+          <span style="margin-left:auto; opacity:0.4;">The two people behind it</span>
+        </header>
+        <div class="team-grid">
+          <article class="creator-card">
+            <img class="creator-avatar" src="../Assets/Creators/xrayessay.png" alt="xrayessay" />
+            <div class="creator-meta">
+              <span class="creator-role">Co-founder · Builder</span>
+              <h3>xrayessay</h3>
+            </div>
+            <p>The builder behind KittyClient. xrayessay brings the Minecraft perspective — knowing what builders actually need, what is missing from existing clients, and what makes a build workflow genuinely faster and more enjoyable. His hands-on experience with large-scale construction in Minecraft shapes every building module the client ships.</p>
+          </article>
+          <article class="creator-card">
+            <img class="creator-avatar" src="../Assets/Creators/mrthickcheeks.png" alt="mrthickcheeks" />
+            <div class="creator-meta">
+              <span class="creator-role">Co-founder · Developer</span>
+              <h3>mrthickcheeks</h3>
+            </div>
+            <p>The coder behind KittyClient. mrthickcheeks handles the full technical stack — the mod architecture, module systems, launcher, backend, and client infrastructure. He turns builder feedback into working features and keeps the entire platform running, updated, and evolving with every new release cycle.</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS -->
+      <section class="section">
+        <header class="section-header">
+          <span>04</span>
+          <span>How It Works</span>
+          <span style="margin-left:auto; opacity:0.4;">The donation model</span>
+        </header>
+        <div class="section-body">
+          <div class="graphic">
+            <svg viewBox="0 0 100 100" aria-hidden="true">
+              <circle cx="50" cy="50" r="44"/>
+              <circle cx="50" cy="50" r="27"/>
+              <circle cx="50" cy="50" r="9"/>
+            </svg>
+          </div>
+          <div class="content">
+            <h2>Supported by the community.</h2>
+            <p>KittyClient runs on a monthly donation model. There are no forced purchases and no locked-away core features — just a community that chooses to support the work. Every donor directly funds continued development, new modules, and platform improvements. We are deeply grateful for every person who backs this project.</p>
+            <div class="donation-grid">
+              <div class="donation-fact">
+                <strong>Monthly Support</strong>
+                <p>Access is tied to an active monthly donation. As long as the community supports it, KittyClient keeps updating.</p>
+              </div>
+              <div class="donation-fact">
+                <strong>Genuinely Appreciated</strong>
+                <p>Every supporter matters. You are the reason this client exists and keeps growing — we do not take that lightly.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FIND US -->
+      <section class="section">
+        <header class="section-header">
+          <span>05</span>
+          <span>Find Us</span>
+          <span style="margin-left:auto; opacity:0.4;">All platforms</span>
+        </header>
+        <div class="section-body" style="padding-right: 28px;">
+          <div class="content">
+            <h2>Follow the platform.</h2>
+            <p>Stay up to date with builds, module previews, updates, and behind-the-scenes content across every platform.</p>
+            <div class="social-row">
+
+              <!-- TikTok -->
+              <a class="social-link" href="https://www.tiktok.com/@kittyclient" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/>
+                </svg>
+                TikTok
+              </a>
+
+              <!-- X / Twitter -->
+              <a class="social-link" href="https://x.com/kittyclient" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                X / Twitter
+              </a>
+
+              <!-- YouTube -->
+              <a class="social-link" href="https://www.youtube.com/@KittyClient" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                YouTube
+              </a>
+
+              <!-- Instagram -->
+              <a class="social-link" href="https://www.instagram.com/kittyclient/" target="_blank" rel="noopener noreferrer">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                Instagram
+              </a>
+
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      <p>KittyClient · Built by xrayessay &amp; mrthickcheeks</p>
+      <p>kittyclient.com</p>
+    </footer>
+
+  </div>
+
+  <script>
+    window.addEventListener("pageshow", () => {
+      document.body.classList.add("is-ready");
+      document.body.classList.remove("is-leaving");
+    });
+    requestAnimationFrame(() => {
+      document.body.classList.add("is-ready");
+    });
+    document.querySelectorAll("a[href]").forEach(link => {
+      const href = link.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("mailto:") || link.target === "_blank") return;
+      link.addEventListener("click", event => {
+        const url = new URL(link.href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        event.preventDefault();
+        document.body.classList.add("is-leaving");
+        setTimeout(() => { window.location.href = link.href; }, 260);
+      });
+    });
+  </script>
+</body>
+</html>
