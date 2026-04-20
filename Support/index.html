@@ -383,9 +383,12 @@
         gap: 0;
         padding: 12px 14px;
       }
-      .nav-toggle { display: flex; }
+      .brand      { grid-row: 1; grid-column: 1; }
+      .nav-toggle { display: flex; grid-row: 1; grid-column: 2; }
+      .mini, .micro { display: none !important; }
       .nav {
         display: none;
+        grid-row: 2;
         grid-column: 1 / -1;
         flex-direction: column;
         gap: 2px;
@@ -395,7 +398,6 @@
         opacity: 1;
         transform: none;
         transition: none;
-        justify-self: stretch;
       }
       body.nav-open .nav { display: flex; }
       .nav a { padding: 10px 8px; width: 100%; }
