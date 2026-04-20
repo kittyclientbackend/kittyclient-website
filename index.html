@@ -553,6 +553,30 @@
       color: var(--muted);
     }
 
+    /* ── NAV TOGGLE ── */
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: 1px solid var(--line);
+      cursor: pointer;
+      width: 38px; height: 38px;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+      padding: 0;
+    }
+    .nav-toggle span {
+      display: block;
+      width: 16px; height: 1px;
+      background: var(--text);
+      transition: transform 220ms ease, opacity 220ms ease;
+    }
+    body.nav-open .nav-toggle span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+    body.nav-open .nav-toggle span:nth-child(2) { opacity: 0; }
+    body.nav-open .nav-toggle span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
     /* ── RESPONSIVE ── */
     @media (max-width: 940px) {
       .main-header {
@@ -564,18 +588,33 @@
       .section-body { padding-right: 28px; }
       .section-corner { display: none; }
     }
-    @media (max-width: 580px) {
+    @media (max-width: 600px) {
       .page { width: calc(100vw - 24px); }
       .main-header {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr auto;
         gap: 10px;
         padding: 12px 14px;
+        position: relative;
       }
+      .nav-toggle { display: flex; }
       .nav {
-        justify-self: start;
-        gap: 4px;
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        left: 0; right: 0;
+        flex-direction: column;
+        background: rgba(13,13,13,0.97);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--line);
+        padding: 6px;
+        gap: 2px;
+        z-index: 50;
+        opacity: 1;
+        transform: none;
+        transition: none;
       }
-      .nav a { padding: 8px 10px; }
+      body.nav-open .nav { display: flex; }
+      .nav a { padding: 11px 14px; width: 100%; }
       h1 { font-size: clamp(2.6rem, 13vw, 3.8rem); }
       .hero { padding: 60px 0 44px; }
       .hero-stats { gap: 18px; }
@@ -603,6 +642,7 @@
         <a href="Support/">Support</a>
         <a href="About/">About</a>
       </nav>
+      <button class="nav-toggle" id="navToggle" aria-label="Menu"><span></span><span></span><span></span></button>
       <div class="mini">Build Faster · Play Cleaner</div>
     </header>
 
@@ -1403,6 +1443,12 @@
         setTimeout(() => { window.location.href = link.href; }, 250);
       });
     });
+    const navToggle = document.getElementById('navToggle');
+    if (navToggle) {
+      navToggle.addEventListener('click', () => document.body.classList.toggle('nav-open'));
+      document.querySelectorAll('.nav a').forEach(a => a.addEventListener('click', () => document.body.classList.remove('nav-open')));
+      document.addEventListener('click', e => { if (!e.target.closest('.main-header')) document.body.classList.remove('nav-open'); });
+    }
   </script>
 
   <!-- ── SKIN SYNC ── -->
