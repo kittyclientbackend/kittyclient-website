@@ -340,6 +340,13 @@
       fill: none;
       stroke-width: 1.5;
     }
+    .section-corner.is-rings { padding: 0; }
+    .section-corner.is-rings canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+    }
 
     h2 {
       font-size: clamp(1.7rem, 3vw, 2.8rem);
@@ -666,6 +673,15 @@
       .contact-grid { grid-template-columns: 1fr; }
       .section-body { padding-right: 28px; }
       .section-corner { display: none; }
+      /* Re-enable the rings corner on mobile so it can come alive when
+         the section is centred in the viewport. */
+      .section-corner.is-rings {
+        display: grid;
+        width: 46px;
+        height: 46px;
+        top: 14px;
+        right: 14px;
+      }
     }
     @media (max-width: 600px) {
       .page { width: calc(100vw - 24px); }
@@ -788,12 +804,8 @@
           <span>Manifesto</span>
         </header>
         <div class="section-body">
-          <div class="section-corner">
-            <svg viewBox="0 0 100 100">
-              <circle cx="50" cy="50" r="44"/>
-              <circle cx="50" cy="50" r="29"/>
-              <circle cx="50" cy="50" r="14"/>
-            </svg>
+          <div class="section-corner is-rings" id="manifestoRings" aria-hidden="true">
+            <canvas></canvas>
           </div>
           <h2>Not just a list of buttons — the power of a thousand mods in one client.</h2>
           <p class="intro">KittyClient keeps utility and personality in the same system. Practical tools sit alongside custom themes, animated menus, and social presence — all under one recognisable identity.</p>
@@ -1523,6 +1535,117 @@
       document.querySelectorAll('.nav a').forEach(a => a.addEventListener('click', () => document.body.classList.remove('nav-open')));
       document.addEventListener('click', e => { if (!e.target.closest('.main-header')) document.body.classList.remove('nav-open'); });
     }
+  </script>
+
+  <!-- ── MANIFESTO RINGS (gyroscope) ── -->
+  <script type="module">
+    import * as THREE from 'three';
+
+    (function initManifestoRings() {
+      const wrap = document.getElementById('manifestoRings');
+      if (!wrap) return;
+      const canvas = wrap.querySelector('canvas');
+      if (!canvas) return;
+
+      const isCoarse = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 10);
+      camera.position.set(0, 0, 3.2);
+      camera.lookAt(0, 0, 0);
+
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(2, window.devicePixelRatio));
+
+      // Three nested rings — radii match the original SVG circles (44, 29, 14
+      // out of 50). Each tumbles around its own axis at its own rate, so when
+      // the section is "active" the rings appear to spin apart while still
+      // sharing a centre.
+      const ringMat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.7,
+      });
+      const ringSpecs = [
+        { radius: 0.88, axis: new THREE.Vector3(1.0, 0.0, 0.0).normalize(), speed: 0.85 },
+        { radius: 0.58, axis: new THREE.Vector3(0.0, 1.0, 0.0).normalize(), speed: 1.20 },
+        { radius: 0.28, axis: new THREE.Vector3(0.7, 0.5, 0.4).normalize(), speed: 0.70 },
+      ];
+      const tubeRadius = 0.035;
+      const rings = ringSpecs.map((spec) => {
+        const geo = new THREE.TorusGeometry(spec.radius, tubeRadius, 14, 64);
+        const mesh = new THREE.Mesh(geo, ringMat);
+        scene.add(mesh);
+        return { mesh, axis: spec.axis, speed: spec.speed, angle: 0 };
+      });
+
+      // Activation state — eased toward 1 when the user is hovering (desktop)
+      // or has the section centred in the viewport (mobile).
+      let targetActive = 0;
+      let active = 0;
+
+      const sectionEl = wrap.closest('.section');
+      if (sectionEl) {
+        if (!isCoarse) {
+          sectionEl.addEventListener('mouseenter', () => { targetActive = 1; });
+          sectionEl.addEventListener('mouseleave', () => { targetActive = 0; });
+        } else if ('IntersectionObserver' in window) {
+          // Fires when the section sits in the middle 20% of the viewport.
+          new IntersectionObserver((entries) => {
+            for (const e of entries) targetActive = e.isIntersecting ? 1 : 0;
+          }, { rootMargin: '-40% 0px -40% 0px', threshold: 0 }).observe(sectionEl);
+        }
+      }
+
+      // Pause rendering when the corner is off-screen.
+      let visible = true;
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver((entries) => {
+          for (const e of entries) visible = e.isIntersecting;
+        }, { threshold: 0 }).observe(wrap);
+      }
+
+      function resize() {
+        const r = wrap.getBoundingClientRect();
+        const w = Math.max(1, Math.floor(r.width));
+        const h = Math.max(1, Math.floor(r.height));
+        renderer.setSize(w, h, false);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      // Slerp from identity → axis-angle rotation, scaled by `active`. When
+      // `active` is 0 the rings sit flat in the XY plane (looking like the
+      // original concentric circles); as it rises they tilt out of plane and
+      // spin around their own axes.
+      const _idQ = new THREE.Quaternion();
+      const _spinQ = new THREE.Quaternion();
+
+      let prev = performance.now();
+      function frame() {
+        requestAnimationFrame(frame);
+        if (!visible || document.hidden) { prev = performance.now(); return; }
+
+        const now = performance.now();
+        let dt = (now - prev) / 1000;
+        prev = now;
+        if (dt > 0.05) dt = 0.05;
+
+        const ease = 1 - Math.exp(-dt * 4.5);
+        active += (targetActive - active) * ease;
+
+        for (const r of rings) {
+          r.angle += dt * r.speed * active;
+          _spinQ.setFromAxisAngle(r.axis, r.angle);
+          r.mesh.quaternion.copy(_idQ).slerp(_spinQ, active);
+        }
+
+        renderer.render(scene, camera);
+      }
+      frame();
+    })();
   </script>
 
   <!-- ── HERO MAZE GAME ── -->
