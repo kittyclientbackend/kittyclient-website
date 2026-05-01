@@ -168,10 +168,14 @@
     }
     .hero-content { min-width: 0; }
     .hero-maze {
-      display: none;
+      display: block;
       position: relative;
       aspect-ratio: 1.15 / 1;
+      width: 100%;
+      max-width: min(86vw, 460px);
+      margin: 0 auto;
       user-select: none;
+      touch-action: pan-y;
     }
     .hero-maze canvas {
       display: block;
@@ -180,12 +184,62 @@
       background: transparent;
       outline: none;
     }
+    .maze-prompt {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      font: 600 0.78rem/1 Arial, Helvetica, sans-serif;
+      letter-spacing: 0.04em;
+      color: #f5f5f7;
+      background: rgba(20, 20, 24, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      cursor: pointer;
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .maze-prompt.is-shown {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .maze-prompt.is-hidden {
+      opacity: 0;
+      transform: translate(-50%, 6px);
+      pointer-events: none;
+    }
+    .maze-prompt-icon {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid currentColor;
+      border-radius: 3px;
+      position: relative;
+    }
+    .maze-prompt-icon::after {
+      content: "";
+      position: absolute;
+      inset: 2.5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
     @media (min-width: 940px) {
       .hero {
         grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
         gap: 32px;
       }
-      .hero-maze { display: block; }
+      .hero-maze {
+        max-width: none;
+        margin: 0;
+      }
+      .maze-prompt { display: none; }
     }
     .eyebrow {
       display: block;
@@ -692,6 +746,10 @@
         </div>
         <div class="hero-maze" id="mazeWrap" aria-hidden="true">
           <canvas id="mazeCanvas"></canvas>
+          <button type="button" class="maze-prompt" id="mazePrompt" aria-label="Enable tilt control">
+            <span class="maze-prompt-icon" aria-hidden="true"></span>
+            <span class="maze-prompt-text">Tap, then tilt</span>
+          </button>
         </div>
       </section>
 
@@ -1476,9 +1534,12 @@
     (function initMazeGame() {
       const wrap   = document.getElementById('mazeWrap');
       const canvas = document.getElementById('mazeCanvas');
+      const prompt = document.getElementById('mazePrompt');
       if (!wrap || !canvas) return;
-      // Desktop only (the layout already hides .hero-maze on small screens)
-      if (!window.matchMedia('(min-width: 940px)').matches) return;
+
+      // Input mode: coarse-pointer (touch) devices use the gyroscope;
+      // desktop keeps the existing hover-driven tilt.
+      const isCoarse = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
       const scene = new THREE.Scene();
       scene.background = null;
@@ -1612,6 +1673,9 @@
 
         respawn();
         ball.visible = true;
+        if (isCoarse && typeof window.__mazeShowPrompt === 'function') {
+          window.__mazeShowPrompt();
+        }
       }, undefined, (err) => {
         console.error('Maze load failed:', err);
       });
@@ -1633,17 +1697,103 @@
       const maxTilt = 0.32;
       const curve = v => Math.sign(v) * Math.pow(Math.abs(v), 1.4);
 
-      wrap.addEventListener('pointermove', (e) => {
-        const r = wrap.getBoundingClientRect();
-        const px = (e.clientX - r.left) / r.width;
-        const py = (e.clientY - r.top)  / r.height;
-        tiltTargetZ = -curve((px - 0.5) * 2) * maxTilt;
-        tiltTargetX =  curve((py - 0.5) * 2) * maxTilt;
-      });
-      wrap.addEventListener('pointerleave', () => {
-        tiltTargetX = 0;
-        tiltTargetZ = 0;
-      });
+      if (!isCoarse) {
+        wrap.addEventListener('pointermove', (e) => {
+          const r = wrap.getBoundingClientRect();
+          const px = (e.clientX - r.left) / r.width;
+          const py = (e.clientY - r.top)  / r.height;
+          tiltTargetZ = -curve((px - 0.5) * 2) * maxTilt;
+          tiltTargetX =  curve((py - 0.5) * 2) * maxTilt;
+        });
+        wrap.addEventListener('pointerleave', () => {
+          tiltTargetX = 0;
+          tiltTargetZ = 0;
+        });
+      } else {
+        // Mobile: gyro-driven tilt. Permission is gated behind a tap so we
+        // never throw an unsolicited prompt; the maze otherwise renders as a
+        // static showcase. Baseline is captured on the first event after enable
+        // so the user can hold the phone at any natural angle.
+        let baselineBeta = null, baselineGamma = null;
+        let gyroEngaged = false;
+        const TILT_DEG_PER_FULL = 22;   // 22° of tilt → max ball influence
+        const PROMPT_HIDE_AFTER_MS = 1200;
+        let firstTiltSeenAt = 0;
+
+        function getScreenAngleRad() {
+          const a = (screen.orientation && typeof screen.orientation.angle === 'number')
+            ? screen.orientation.angle
+            : (typeof window.orientation === 'number' ? window.orientation : 0);
+          return a * Math.PI / 180;
+        }
+
+        function onOrientation(e) {
+          if (e.beta == null || e.gamma == null) return;
+          if (baselineBeta == null) {
+            baselineBeta = e.beta;
+            baselineGamma = e.gamma;
+            return;
+          }
+          // Re-map beta/gamma through the current screen rotation so the
+          // controls stay consistent in landscape and portrait.
+          const dB = e.beta  - baselineBeta;
+          const dG = e.gamma - baselineGamma;
+          const a = getScreenAngleRad();
+          const cosA = Math.cos(a), sinA = Math.sin(a);
+          const x =  dB * cosA + dG * sinA;
+          const z = -dB * sinA + dG * cosA;
+          const nx = Math.max(-1, Math.min(1, x / TILT_DEG_PER_FULL));
+          const nz = Math.max(-1, Math.min(1, z / TILT_DEG_PER_FULL));
+          tiltTargetZ = -curve(nz) * maxTilt;
+          tiltTargetX =  curve(nx) * maxTilt;
+
+          if (!firstTiltSeenAt && (Math.abs(dB) > 1.5 || Math.abs(dG) > 1.5)) {
+            firstTiltSeenAt = performance.now();
+            setTimeout(() => prompt && prompt.classList.add('is-hidden'), PROMPT_HIDE_AFTER_MS);
+          }
+        }
+
+        function recalibrate() {
+          baselineBeta = null;
+          baselineGamma = null;
+        }
+
+        async function enableGyro() {
+          if (gyroEngaged) { recalibrate(); return; }
+          try {
+            const Req = window.DeviceOrientationEvent && window.DeviceOrientationEvent.requestPermission;
+            if (typeof Req === 'function') {
+              const result = await window.DeviceOrientationEvent.requestPermission();
+              if (result !== 'granted') {
+                if (prompt) {
+                  prompt.querySelector('.maze-prompt-text').textContent = 'Tilt unavailable';
+                  setTimeout(() => prompt.classList.add('is-hidden'), 1500);
+                }
+                return;
+              }
+            }
+            window.addEventListener('deviceorientation', onOrientation, { passive: true });
+            gyroEngaged = true;
+            if (prompt) prompt.querySelector('.maze-prompt-text').textContent = 'Tilt to roll';
+          } catch (_) {
+            if (prompt) prompt.classList.add('is-hidden');
+          }
+        }
+
+        if (prompt) {
+          prompt.addEventListener('click', enableGyro);
+          // Show the prompt once the maze is loaded (see loader callback below).
+          window.__mazeShowPrompt = () => prompt.classList.add('is-shown');
+        }
+
+        // Double-tap on the maze to recalibrate (handy if the user shifts grip).
+        let lastTap = 0;
+        wrap.addEventListener('touchend', () => {
+          const t = performance.now();
+          if (t - lastTap < 320 && gyroEngaged) recalibrate();
+          lastTap = t;
+        }, { passive: true });
+      }
 
       function resize() {
         const r = wrap.getBoundingClientRect();
@@ -1690,8 +1840,23 @@
         fallTimer = 0;
       }
 
+      // Pause the render loop when the maze scrolls out of view — saves
+      // battery on phones without affecting the experience when the user is
+      // actually looking at it.
+      let visible = true;
+      if ('IntersectionObserver' in window) {
+        new IntersectionObserver((entries) => {
+          for (const e of entries) visible = e.isIntersecting;
+          if (visible) prev = performance.now();
+        }, { threshold: 0.01 }).observe(wrap);
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') prev = performance.now();
+      });
+
       function frame() {
         requestAnimationFrame(frame);
+        if (!visible || document.hidden) return;
 
         const now = performance.now();
         let dt = (now - prev) / 1000;
