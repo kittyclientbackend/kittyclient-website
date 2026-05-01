@@ -1596,6 +1596,8 @@
 
       // Glossy black plastic — clearcoat gives the smooth specular sheen that
       // reads as solid moulded material rather than flat paint.
+      // polygonOffset pushes the surface a hair into the depth buffer so the
+      // edge-line overlay below sits cleanly on top without z-fighting.
       const mazeMat = new THREE.MeshPhysicalMaterial({
         color: 0x0c0c10,
         metalness: 0.18,
@@ -1604,6 +1606,19 @@
         clearcoatRoughness: 0.16,
         reflectivity: 0.55,
         envMapIntensity: 1.0,
+        polygonOffset: true,
+        polygonOffsetFactor: 1,
+        polygonOffsetUnits: 1,
+      });
+
+      // Edge overlay material — thin off-white lines drawn along every
+      // hard corner of the maze geometry. Makes wall silhouettes pop against
+      // the glossy black material without needing a post-process outline pass.
+      const edgeMat = new THREE.LineBasicMaterial({
+        color: 0xeef0f5,
+        transparent: true,
+        opacity: 0.62,
+        depthWrite: false,
       });
 
       let mazeRoot = null;
@@ -1633,6 +1648,12 @@
             o.material = mazeMat;
             o.castShadow = false;
             o.receiveShadow = false;
+            // Edge overlay: 30° threshold keeps the corner lines and skips
+            // the internal triangulation seams of curved/flat faces.
+            const edges = new THREE.EdgesGeometry(o.geometry, 30);
+            const lines = new THREE.LineSegments(edges, edgeMat);
+            lines.renderOrder = 1;
+            o.add(lines);
           }
         });
 
