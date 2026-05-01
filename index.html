@@ -1561,17 +1561,21 @@
       // out of 50). Each tumbles around its own axis at its own rate, so when
       // the section is "active" the rings appear to spin apart while still
       // sharing a centre.
+      // Match the original SVG (stroke rgba(255,255,255,0.6) at 1.5/100 of
+      // the 66%-of-58px viewport) — radii 44, 29, 14 of viewBox-100 land at
+      // 0.58, 0.38, 0.18 in scene units given the camera setup below, and a
+      // ~0.014 tube radius reads like the SVG's ~0.6px stroke.
       const ringMat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
-        opacity: 0.7,
+        opacity: 0.6,
       });
       const ringSpecs = [
-        { radius: 0.88, axis: new THREE.Vector3(1.0, 0.0, 0.0).normalize(), speed: 0.85 },
-        { radius: 0.58, axis: new THREE.Vector3(0.0, 1.0, 0.0).normalize(), speed: 1.20 },
-        { radius: 0.28, axis: new THREE.Vector3(0.7, 0.5, 0.4).normalize(), speed: 0.70 },
+        { radius: 0.58, axis: new THREE.Vector3(1.0, 0.0, 0.0).normalize(), speed: 0.85 },
+        { radius: 0.38, axis: new THREE.Vector3(0.0, 1.0, 0.0).normalize(), speed: 1.20 },
+        { radius: 0.18, axis: new THREE.Vector3(0.7, 0.5, 0.4).normalize(), speed: 0.70 },
       ];
-      const tubeRadius = 0.035;
+      const tubeRadius = 0.014;
       const rings = ringSpecs.map((spec) => {
         const geo = new THREE.TorusGeometry(spec.radius, tubeRadius, 14, 64);
         const mesh = new THREE.Mesh(geo, ringMat);
