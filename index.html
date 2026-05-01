@@ -1570,17 +1570,44 @@
         transparent: true,
         opacity: 0.6,
       });
+      // Each ring gets its own static tilt and spin axis so the three rings
+      // read as three distinct motions, not the same tumble at three sizes:
+      //  - Big ring: tilted ~25° around X, spinning around Y → hula-hoop
+      //    precession (stays in place, top edge sweeps around)
+      //  - Mid ring: flat, spinning around X → coin-flip forward/back
+      //  - Small ring: oblique tilt + oblique spin → free gyroscope tumble
       const ringSpecs = [
-        { radius: 0.58, axis: new THREE.Vector3(1.0, 0.0, 0.0).normalize(), speed: 0.85 },
-        { radius: 0.38, axis: new THREE.Vector3(0.0, 1.0, 0.0).normalize(), speed: 1.20 },
-        { radius: 0.18, axis: new THREE.Vector3(0.7, 0.5, 0.4).normalize(), speed: 0.70 },
+        {
+          radius: 0.58,
+          tilt:     new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 0.45),
+          spinAxis: new THREE.Vector3(0, 1, 0).normalize(),
+          speed: 1.40,
+        },
+        {
+          radius: 0.38,
+          tilt:     new THREE.Quaternion(), // identity — stays flat, just flips
+          spinAxis: new THREE.Vector3(1, 0, 0).normalize(),
+          speed: 0.90,
+        },
+        {
+          radius: 0.18,
+          tilt:     new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0.4, 0).normalize(), 0.55),
+          spinAxis: new THREE.Vector3(0.5, 0.6, 0.6).normalize(),
+          speed: 1.70,
+        },
       ];
       const tubeRadius = 0.014;
       const rings = ringSpecs.map((spec) => {
         const geo = new THREE.TorusGeometry(spec.radius, tubeRadius, 14, 64);
         const mesh = new THREE.Mesh(geo, ringMat);
         scene.add(mesh);
-        return { mesh, axis: spec.axis, speed: spec.speed, angle: 0 };
+        return {
+          mesh,
+          tilt: spec.tilt,
+          spinAxis: spec.spinAxis,
+          speed: spec.speed,
+          angle: 0,
+        };
       });
 
       // Activation state — eased toward 1 when the user is hovering (desktop)
@@ -1620,12 +1647,13 @@
       resize();
       window.addEventListener('resize', resize);
 
-      // Slerp from identity → axis-angle rotation, scaled by `active`. When
-      // `active` is 0 the rings sit flat in the XY plane (looking like the
-      // original concentric circles); as it rises they tilt out of plane and
-      // spin around their own axes.
+      // Slerp from identity → (spin * tilt), scaled by `active`. When `active`
+      // is 0 the rings sit flat in the XY plane (looking like the original
+      // concentric circles); as it rises each ring eases into its own tilted
+      // pose and spins around its own axis.
       const _idQ = new THREE.Quaternion();
       const _spinQ = new THREE.Quaternion();
+      const _composeQ = new THREE.Quaternion();
 
       let prev = performance.now();
       function frame() {
@@ -1642,8 +1670,10 @@
 
         for (const r of rings) {
           r.angle += dt * r.speed * active;
-          _spinQ.setFromAxisAngle(r.axis, r.angle);
-          r.mesh.quaternion.copy(_idQ).slerp(_spinQ, active);
+          _spinQ.setFromAxisAngle(r.spinAxis, r.angle);
+          // Apply tilt first, then continuous spin: q = spin * tilt
+          _composeQ.copy(_spinQ).multiply(r.tilt);
+          r.mesh.quaternion.copy(_idQ).slerp(_composeQ, active);
         }
 
         renderer.render(scene, camera);
