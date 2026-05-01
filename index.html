@@ -1653,6 +1653,10 @@
             const edges = new THREE.EdgesGeometry(o.geometry, 30);
             const lines = new THREE.LineSegments(edges, edgeMat);
             lines.renderOrder = 1;
+            // Skip raycasting — Three's default Line threshold is 1 world
+            // unit, which would let the ball's collision rays "hit" these
+            // lines before reaching the wall meshes and break physics.
+            lines.raycast = () => {};
             o.add(lines);
           }
         });
