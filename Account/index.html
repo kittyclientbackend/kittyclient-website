@@ -1622,6 +1622,7 @@
             `;
             document.getElementById("dlBtn").addEventListener("click", async () => {
               const btn = document.getElementById("dlBtn");
+              alert("Heads up: once your download finishes, place the KittyClient .jar file into your Minecraft 'mods' folder, then launch Minecraft with Fabric for 1.21.11.\n\n(The Fabric API mod must also be in the mods folder.)");
               btn.disabled = true; btn.textContent = "Preparing...";
               try {
                 const idToken = await user.getIdToken();
@@ -1635,7 +1636,6 @@
                   const a = document.createElement("a");
                   a.href = data.url; a.download = data.filename || "KittyClient-loader.jar";
                   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                  alert("Download started!\n\nPlace the KittyClient .jar file into your Minecraft 'mods' folder, then launch Minecraft with Fabric for 1.21.11.\n\n(The Fabric API mod must also be in the mods folder.)");
                 }
               } catch (_) {}
               btn.disabled = false; btn.textContent = "Download Client";
