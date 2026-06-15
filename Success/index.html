@@ -315,8 +315,8 @@
             <div class="step">
               <span class="step-num">03</span>
               <div class="step-body">
-                <strong>Launch Minecraft with Fabric 1.21.4</strong>
-                <p>KittyClient requires Fabric for Minecraft 1.21.4. The Fabric API mod must also be present in the mods folder.</p>
+                <strong>Launch Minecraft with Fabric 1.21.11</strong>
+                <p>KittyClient requires Fabric for Minecraft 1.21.11. The Fabric API mod must also be present in the mods folder.</p>
               </div>
             </div>
             <div class="step">
@@ -447,6 +447,8 @@
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
+
+        alert("Download started!\n\nPlace the KittyClient .jar file into your Minecraft 'mods' folder, then launch Minecraft with Fabric for 1.21.11.\n\n(The Fabric API mod must also be in the mods folder.)");
 
         downloadBtn.disabled    = false;
         downloadBtn.textContent = "Download KittyClient Loader";
